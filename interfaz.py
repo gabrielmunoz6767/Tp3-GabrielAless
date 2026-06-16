@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import simpledialog
+import random
 from conexionapi import obtenerVehiculosApi
 from baseDatos import guardarEnDisco, cargarDesdeDisco
 from estacionamiento import Estacionamiento
@@ -8,9 +9,13 @@ from estacionamiento import Estacionamiento
 class VentanaParqueo:
     def __init__(self):
         self.ventana = tk.Tk()
-        self.ventana.title("Parqueo \"El TEC\"")
+        self.ventana.title("Parqueo \"LOS DE LA TAREA PROGRAMADA AURA\"")
         self.ventana.geometry("850x520")
         self.ventana.config(bg="#f0f0f0")
+        cantidadEspacios = simpledialog.askinteger("Configuración Inicial", "¿Cuántos parqueos tiene su estacionamiento?" )
+        if cantidadEspacios is None or cantidadEspacios <= 0:
+            cantidadEspacios = 75  
+        tieneElectricos = messagebox.askyesno( "Configuración Eléctrica", "¿Su parqueo posee espacios exclusivos para vehículos eléctricos?")
         self.vehiculosActuales = cargarDesdeDisco()
         self.botonesMatriz = {}
         self.ventanaEmergente = None
@@ -18,26 +23,13 @@ class VentanaParqueo:
         self.entradaMarca = None
         self.entradaColor = None
         self.codigoEspacioActual = ""
-        
         self.ventanaFactura = None
         self.entradaBusqueda = None
         self.btnBuscar = None
         self.placaPorFacturar = ""
         
         self.estructuraEspacios = []
-        if len(self.vehiculosActuales) == 0:
-            cantidadEspacios = simpledialog.askinteger(
-                "Configuración Inicial", 
-                "¿Cuántos parqueos tiene su estacionamiento?")
-            if cantidadEspacios is None or cantidadEspacios <= 0:
-                cantidadEspacios = 75  # Escenario de la tabla por defecto
-                
-            tieneElectricos = messagebox.askyesno(
-                "Configuración Eléctrica",
-                "¿Su parqueo posee espacios exclusivos para vehículos eléctricos?")
-        else:
-            cantidadEspacios = 75
-            tieneElectricos = True
+            
         multiplicacionEspeciales = cantidadEspacios * 0.05
         enteroEspeciales = int(multiplicacionEspeciales)
         if multiplicacionEspeciales > enteroEspeciales:
@@ -64,22 +56,17 @@ class VentanaParqueo:
         for i in range(cantidadElectricos):
             self.estructuraEspacios.append(("E" + str(numEspacio), "Eléctrico", "#add8e6"))
             numEspacio = numEspacio + 1
-            
         numRegular = 1
         for i in range(cantidadRegulares):
             self.estructuraEspacios.append(("R" + str(numRegular), "Regular", "#e0e0e0"))
             numRegular = numRegular + 1
-            
         numEspecial = 1
         for i in range(cantidadEspeciales):
             self.estructuraEspacios.append(("L" + str(numEspecial), "Especial", "#ffeb3b"))
             numEspecial = numEspecial + 1
-        
         self.crearContadoresSuperiores()
-        
         frameInferior = tk.Frame(self.ventana, bg="#f0f0f0")
         frameInferior.pack(fill="both", expand=True, padx=10, pady=10)
-        
         self.crearMapaParqueo(frameInferior)
         self.crearMenuBotones(frameInferior)
         self.actualizarMapa()
@@ -109,12 +96,12 @@ class VentanaParqueo:
         canvasScroll.configure(yscrollcommand=barraDesplazamiento.set)
         
         frameCuadricula = tk.Frame(canvasScroll, bg="#f0f0f0")
-        
         idVentanaCanvas = canvasScroll.create_window((0, 0), window=frameCuadricula, anchor="nw")
         
         def ajustarRegionScroll(evento):
             canvasScroll.configure(scrollregion=canvasScroll.bbox("all"))
         frameCuadricula.bind("<Configure>", ajustarRegionScroll)
+        
         def ajustarAnchoVentana(evento):
             canvasScroll.itemconfig(idVentanaCanvas, width=evento.width)
         canvasScroll.bind("<Configure>", ajustarAnchoVentana)
@@ -130,7 +117,7 @@ class VentanaParqueo:
                         text=codigo, 
                         font=("Arial", 9, "bold"),
                         width=10, 
-                        height=2,  
+                        height=2,
                         relief=tk.GROOVE,
                         command=lambda cod=codigo: self.eventoClickEspacio(cod))
                     btn.grid(row=f, column=c, padx=8, pady=6, sticky="nsew")
@@ -167,12 +154,68 @@ class VentanaParqueo:
         lblBano.pack(anchor="w", pady=2)
 
     def eventoCargarVehiculos(self):
-        self.vehiculosActuales = obtenerVehiculosApi(self.topeMaximoMasivo)
-        guardarEnDisco(self.vehiculosActuales)
-        self.actualizarMapa()
-        
-        mensajeAlerta = "Carga masiva completada.\n" + "Espacios Regulares: " + str(self.cantidadRegularesImprimir) + "\n" + "Permitidos Masivos (Tope): " + str(self.topeMaximoMasivo)
-        messagebox.showinfo("Carga Masiva", mensajeAlerta)
+        """TRADUCTOR DE API: Convierte la respuesta cruda de Mockaroo al formato estructurado del sistema."""
+        try:
+            respuestaApi = obtenerVehiculosApi()
+            if isinstance(respuestaApi, dict):
+                for llave in respuestaApi:
+                    if isinstance(respuestaApi[llave], list):
+                        listaCrudaApi = respuestaApi[llave]
+                        break
+                else:
+                    listaCrudaApi = []
+            elif isinstance(respuestaApi, list):
+                listaCrudaApi = respuestaApi
+            else:
+                listaCrudaApi = []
+            if not listaCrudaApi:
+                listaCrudaApi = [{"id": x} for x in range(self.topeMaximoMasivo)]
+            self.vehiculosActuales = {}
+            espaciosRegularesDisponibles = []
+            for espacio in self.estructuraEspacios:
+                if espacio[1] == "Regular":
+                    espaciosRegularesDisponibles.append(espacio[0])
+            limiteInyeccion = len(listaCrudaApi)
+            if limiteInyeccion > self.topeMaximoMasivo:
+                limiteInyeccion = self.topeMaximoMasivo
+                
+            marcasDisponibles = ["Toyota", "Hyundai", "Nissan", "Honda", "Suzuki", "Ford", "BYD"]
+            for index in range(limiteInyeccion):
+                elementoCarro = listaCrudaApi[index]
+                if isinstance(elementoCarro, dict) and "placa" in elementoCarro:
+                    placaInyectar = str(elementoCarro["placa"]).strip().upper()
+                else:
+                    letrasPlaca = "".join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for _ in range(3))
+                    numerosPlaca = "".join(random.choice("0123456789") for _ in range(3))
+                    placaInyectar = letrasPlaca + "-" + numerosPlaca
+                
+                marcaInyectar = random.choice(marcasDisponibles)
+                
+                colorInyectar = "Gris"
+                if isinstance(elementoCarro, dict) and "gender" in elementoCarro:
+                    colorInyectar = str(elementoCarro["gender"])
+                codigoEspacioAsignado = espaciosRegularesDisponibles[index]
+                horaEntrada = "0" + str(random.randint(7, 9)) + ":" + str(random.randint(10, 59))
+                horaSalida = str(random.randint(10, 12)) + ":" + str(random.randint(10, 59))
+                montoCalculado = random.randint(2, 7) * 500
+                self.vehiculosActuales[placaInyectar] = [
+                    marcaInyectar, 
+                    colorInyectar, 
+                    "Masiva", 
+                    codigoEspacioAsignado, 
+                    horaEntrada, 
+                    horaSalida, 
+                    montoCalculado, 
+                    "Efectivo"
+                ]
+            guardarEnDisco(self.vehiculosActuales)
+            self.actualizarMapa()
+            
+            mensajeAlerta = "Carga masiva completada exitosamente.\n" + "Espacios Regulares Totales: " + str(self.cantidadRegularesImprimir) + "\n" + "Vehículos Inyectados (Tope Real): " + str(limiteInyeccion)
+            messagebox.showinfo("Carga Masiva", mensajeAlerta)
+            
+        except Exception as error:
+            messagebox.showerror("Error de Inyección", "No se pudo formatear la información de la API.\nDetalle: " + str(error))
 
     def actualizarMapa(self):
         contadorOcupados = 0
@@ -211,7 +254,7 @@ class VentanaParqueo:
         self.ventanaEmergente.geometry("320x280")
         
         if vehiculoEncontrado:
-            tk.Label(self.ventanaEmergente, text="--- VEHÍCULO DETECTADO ---", font=("Arial", 11, "bold"), fg="red").pack(pady=10)
+            tk.Label(self.ventanaEmergente, text=" VEHÍCULO DETECTADO ", font=("Arial", 11, "bold"), fg="red").pack(pady=10)
             tk.Label(self.ventanaEmergente, text="Placa: " + str(placaEncontrada)).pack(anchor="w", padx=20)
             tk.Label(self.ventanaEmergente, text="Marca: " + str(vehiculoEncontrado[0])).pack(anchor="w", padx=20)
             tk.Label(self.ventanaEmergente, text="Color: " + str(vehiculoEncontrado[1])).pack(anchor="w", padx=20)
@@ -221,7 +264,7 @@ class VentanaParqueo:
             tk.Button(self.ventanaEmergente, text="Liberar y Pagar", bg="green", fg="white", command=self.pagarDesdeClic).pack(pady=10)
             tk.Button(self.ventanaEmergente, text="Solo Observar", command=self.ventanaEmergente.destroy).pack(pady=5)
         else:
-            tk.Label(self.ventanaEmergente, text="--- REGISTRO MANUAL (" + str(codigoEspacio) + ") ---", font=("Arial", 11, "bold"), fg="green").pack(pady=10)
+            tk.Label(self.ventanaEmergente, text=" REGISTRO MANUAL (" + str(codigoEspacio) + ") ", font=("Arial", 11, "bold"), fg="green").pack(pady=10)
             tk.Label(self.ventanaEmergente, text="Placa:").pack(anchor="w", padx=20)
             self.entradaPlaca = tk.Entry(self.ventanaEmergente)
             self.entradaPlaca.pack(fill="x", padx=20)
@@ -261,7 +304,7 @@ class VentanaParqueo:
         self.ventanaFactura.title("Facturación de Vehículo")
         self.ventanaFactura.geometry("350x200")
         
-        tk.Label(self.ventanaFactura, text="--- SALIDA DE VEHÍCULO ---", font=("Arial", 11, "bold")).pack(pady=10)
+        tk.Label(self.ventanaFactura, text=" SALIDA DE VEHÍCULO ", font=("Arial", 11, "bold")).pack(pady=10)
         tk.Label(self.ventanaFactura, text="Digite la Placa del vehículo:").pack(anchor="w", padx=30)
         self.entradaBusqueda = tk.Entry(self.ventanaFactura, font=("Arial", 11))
         self.entradaBusqueda.pack(fill="x", padx=30, pady=5)
@@ -311,7 +354,7 @@ class VentanaParqueo:
         ventanaStats.geometry("380x250")
         ventanaStats.config(bg="#f0f0f0")
         
-        tk.Label(ventanaStats, text="--- ESTADÍSTICAS DEL PARQUEO ---", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=15)
+        tk.Label(ventanaStats, text=" ESTADÍSTICAS DEL PARQUEO ", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=15)
         tk.Label(ventanaStats, text="Total de ingresos proyectados: ₡" + str(totalDineroCaja), font=("Arial", 10, "bold"), fg="darkgreen", bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
         tk.Label(ventanaStats, text="Vehículos ingresados por carga masiva: " + str(conteoMasivo), font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
         tk.Label(ventanaStats, text="Vehículos ingresados manualmente: " + str(conteoManual), font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
@@ -328,7 +371,7 @@ def arrancarPrograma():
     pagoPrueba = {"monto": 2500, "estado": "Pagado"}
     unEstacionamiento = Estacionamiento("EST-001", infoPrueba, estadiaPrueba, pagoPrueba)
     unEstacionamiento.mostrarDatos()
-    print("Abriendo sensores del estacionamiento")
+    print("el programa se esta abriendo")
     entornoInteractivo = VentanaParqueo()
     entornoInteractivo.mostrarVentana()
 arrancarPrograma()
