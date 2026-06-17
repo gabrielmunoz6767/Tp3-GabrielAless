@@ -3,15 +3,17 @@ from tkinter import messagebox
 from tkinter import simpledialog
 from tkinter import ttk
 import random
+import re
+from datetime import datetime  
 from conexionapi import obtenerVehiculosApi
 from baseDatos import guardarEnDisco, cargarDesdeDisco
 from estacionamiento import Estacionamiento
-from factura import generarComprobantePago
+from factura import generarComprobantePago, generarVoucherEntrada
 
 class VentanaParqueo:
     def __init__(self):
         self.ventana = tk.Tk()
-        self.ventana.title("Parqueo \"El TEC\"")
+        self.ventana.title("Parqueo \"LOS QUE TENEMOS BASTANTE AURILLA\"")
         self.ventana.geometry("850x520")
         self.ventana.config(bg="#f0f0f0")
         
@@ -29,8 +31,10 @@ class VentanaParqueo:
         self.botonesMatriz = {}
         self.ventanaEmergente = None
         self.entradaPlaca = None
-        self.entradaMarca = None
-        self.entradaColor = None
+        self.comboMarca = None  # Cambiado a combo
+        self.comboColor = None  # Cambiado a combo
+        self.entradaHoraEntrada = None  #  Nueva caja de texto de solo lectura
+        self.tipoEspacioActualSeleccionado = ""  # Guardar tipo dinámicamente
         self.codigoEspacioActual = ""
         self.ventanaFactura = None
         self.entradaBusqueda = None
@@ -222,7 +226,7 @@ class VentanaParqueo:
             messagebox.showinfo("Carga Masiva", mensajeAlerta)
             
         except Exception as error:
-            messagebox.showerror("Error de Inyección", "No se pudo formatear la información de la API.\nDetalle: " + str(error))
+            messagebox.showerror("No se pudo formatear la información de la API.\nDetalle: " + str(error))
 
     def actualizarMapa(self):
         contadorOcupados = 0
@@ -249,6 +253,12 @@ class VentanaParqueo:
         self.codigoEspacioActual = codigoEspacio
         vehiculoEncontrado = None
         placaEncontrada = ""
+        tipoEspacioTexto = "Regular"
+        for espacio in self.estructuraEspacios:
+            if espacio[0] == codigoEspacio:
+                tipoEspacioTexto = espacio[1]
+                break
+        self.tipoEspacioActualSeleccionado = tipoEspacioTexto
         
         for placa, datos in self.vehiculosActuales.items():
             if datos[3] == codigoEspacio:
@@ -258,7 +268,7 @@ class VentanaParqueo:
                 
         self.ventanaEmergente = tk.Toplevel(self.ventana)
         self.ventanaEmergente.title("Espacio " + str(codigoEspacio))
-        self.ventanaEmergente.geometry("360x320")
+        self.ventanaEmergente.geometry("380x360")
         self.ventanaEmergente.config(bg="#f8f9fa")
         
         if vehiculoEncontrado:
@@ -298,20 +308,47 @@ class VentanaParqueo:
             tk.Button(btnFrame, text="Regresar", bg="#6c757d", fg="white", font=("Arial", 10), width=10, command=self.ventanaEmergente.destroy).pack(side=tk.LEFT, padx=10)
             
         else:
-            tk.Label(self.ventanaEmergente, text="--- REGISTRO MANUAL (" + str(codigoEspacio) + ") ---", font=("Arial", 11, "bold"), fg="green", bg="#f8f9fa").pack(pady=10)
-            tk.Label(self.ventanaEmergente, text="Placa:", bg="#f8f9fa").pack(anchor="w", padx=20)
-            self.entradaPlaca = tk.Entry(self.ventanaEmergente)
-            self.entradaPlaca.pack(fill="x", padx=20)
+            tk.Label(self.ventanaEmergente, text="REGISTRO DE INGRESO (" + str(codigoEspacio) + ")", font=("Arial", 11, "bold"), fg="green", bg="#f8f9fa").pack(pady=10)
             
-            tk.Label(self.ventanaEmergente, text="Marca:", bg="#f8f9fa").pack(anchor="w", padx=20)
-            self.entradaMarca = tk.Entry(self.ventanaEmergente)
-            self.entradaMarca.pack(fill="x", padx=20)
+            formFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
+            formFrame.pack(padx=20, fill="x")
             
-            tk.Label(self.ventanaEmergente, text="Color:", bg="#f8f9fa").pack(anchor="w", padx=20)
-            self.entradaColor = tk.Entry(self.ventanaEmergente)
-            self.entradaColor.pack(fill="x", padx=20)
+            # 1. Caja de Texto para Placa
+            tk.Label(formFrame, text="Placa:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="w", pady=5)
+            self.entradaPlaca = tk.Entry(formFrame, font=("Arial", 10), width=22)
+            self.entradaPlaca.pack_forget() # Limpieza estructural
+            self.entradaPlaca.grid(row=0, column=1, pady=5)
             
-            tk.Button(self.ventanaEmergente, text="Registrar", command=self.guardarManual).pack(pady=15)
+            # 2. Caja de Selección para Marcas 
+            marcasDisponiblesApi = ["Toyota", "Hyundai", "Nissan", "Honda", "Suzuki", "Ford", "BYD"]
+            tk.Label(formFrame, text="Marca:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", pady=5)
+            self.comboMarca = ttk.Combobox(formFrame, values=marcasDisponiblesApi, state="readonly", width=20, font=("Arial", 10))
+            self.comboMarca.set("Toyota")
+            self.comboMarca.grid(row=1, column=1, pady=5)
+            
+            # 3. Caja de Selección para Colores 
+            coloresPool = ["Gris", "Blanco", "Negro", "Rojo", "Azul", "Plata"]
+            for p, v in self.vehiculosActuales.items():
+                if v[1] not in coloresPool:
+                    coloresPool.append(v[1])
+            tk.Label(formFrame, text="Color:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="w", pady=5)
+            self.comboColor = ttk.Combobox(formFrame, values=coloresPool, font=("Arial", 10), width=20)
+            self.comboColor.set("Gris")
+            self.comboColor.grid(row=2, column=1, pady=5)
+            
+            # 4. Hora entrada 
+            horaReloj = datetime.now().strftime("%H:%M")
+            tk.Label(formFrame, text="Hora Entrada:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="w", pady=5)
+            self.entradaHoraEntrada = tk.Entry(formFrame, font=("Arial", 10), width=22)
+            self.entradaHoraEntrada.insert(0, horaReloj)
+            self.entradaHoraEntrada.config(state="readonly")
+            self.entradaHoraEntrada.grid(row=3, column=1, pady=5)
+            
+            # Botones de estacionar regresasr
+            btnFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
+            btnFrame.pack(pady=20)
+            tk.Button(btnFrame, text="Estacionar", bg="#007bff", fg="white", font=("Arial", 10, "bold"), width=12, command=self.guardarManual).pack(side=tk.LEFT, padx=10)
+            tk.Button(btnFrame, text="Regresar", bg="#6c757d", fg="white", font=("Arial", 10), width=12, command=self.ventanaEmergente.destroy).pack(side=tk.LEFT, padx=10)
 
     def solicitarMetodoPago(self):
         ventanaPago = tk.Toplevel(self.ventanaEmergente)
@@ -332,7 +369,6 @@ class VentanaParqueo:
         tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
 
     def ejecutarLiberacionYFactura(self, metodoPago):
-        """Saca el vehículo de la base de datos y delega la creación del PDF/QR real al archivo externo."""
         datosCarro = self.vehiculosActuales.pop(self.placaPorFacturar)
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
@@ -350,17 +386,32 @@ class VentanaParqueo:
         self.ventanaEmergente.destroy()
 
     def guardarManual(self):
+        """Procesa el botón Estacionar, actualiza la estructura, guarda en disco y llama a generarVoucherEntrada"""
         p = self.entradaPlaca.get().strip().upper()
-        m = self.entradaMarca.get().strip()
-        c = self.entradaColor.get().strip()
-        
-        if p and m and c:
-            self.vehiculosActuales[p] = [m, c, "Manual", self.codigoEspacioActual, "13:00", "14:00", 1000, "Efectivo"]
+        m = self.comboMarca.get()
+        c = self.comboColor.get().strip()
+        horaIn = self.entradaHoraEntrada.get()
+        if not p or not c:
+            messagebox.showwarning("Atención", "Por favor ingrese la placa y seleccione un color.")
+            return
+        patronLetrasNum = r"^[A-Z]{3}-\d{3}$"
+        patronSoloNum = r"^\d{1,8}$"
+        if not (re.match(patronLetrasNum, p) or re.match(patronSoloNum, p)):
+            mensajeErrorPlaca = (
+                "Formato de placa inválido o contiene caracteres especiales.\n\n" "Formatos permitidos en Costa Rica:\n"" Tres letras, guion y tres números (Ej: ABC-123)\n"" Solo números de hasta 8 dígitos (Ej: 582491)")
+            messagebox.showwarning("Placa Incorrecta", mensajeErrorPlaca)
+            return
+        self.vehiculosActuales[p] = [m, c, "Manual", self.codigoEspacioActual, horaIn, "00:00", 1000, "Pendiente"]
+        try:
+            nombreVoucher = generarVoucherEntrada(p, m, c, self.tipoEspacioActualSeleccionado, self.codigoEspacioActual)
             guardarEnDisco(self.vehiculosActuales)
             self.actualizarMapa()
+            mensajeExito = "¡Vehículo Estacionado!\n\nEl espacio " + self.codigoEspacioActual + " pasó a color ROJO.\nSe informa verbalmente que el costo es de ₡1000 por hora.\n\nVoucher creado: " + nombreVoucher
+            messagebox.showinfo("Espacio Reservado", mensajeExito)
             self.ventanaEmergente.destroy()
-        else:
-            messagebox.showwarning("Atención", "Por favor llene todos los campos.")
+        except Exception as error:
+            messagebox.showerror(
+                "Ha ocurrido un probelam",  "No se pudo compilar el archivo del Voucher PDF.\nDetalle: " + str(error))
 
     def eventoFacturar(self):
         self.ventanaFactura = tk.Toplevel(self.ventana)
@@ -389,7 +440,7 @@ class VentanaParqueo:
             tk.Label(self.ventanaFactura, text="Monto Total a Pagar: ₡" + str(datosCarro[6]), font=("Arial", 11, "bold"), fg="darkgreen").pack(pady=5)
             tk.Button(self.ventanaFactura, text="Confirmar Pago y Salida", bg="green", fg="white", command=self.solicitarMetodoPago).pack(pady=10)
         else:
-            messagebox.showerror("Error", "La placa digitada no se encuentra activa en el parqueo.")
+            messagebox.showerror("ha ocurrido un problema", "La placa digitada no se encuentra activa en el parqueo.")
 
     def confirmarSalida(self):
         datosCarro = self.vehiculosActuales.pop(self.placaPorFacturar)
@@ -412,7 +463,7 @@ class VentanaParqueo:
                 conteoManual = conteoManual + 1
                 
         ventanaStats = tk.Toplevel(self.ventana)
-        ventanaStats.title("Reportes Generales")
+        ventanaStats.title("Reportes Generals")
         ventanaStats.geometry("380x250")
         ventanaStats.config(bg="#f0f0f0")
         

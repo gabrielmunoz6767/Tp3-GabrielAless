@@ -32,5 +32,45 @@ def generarComprobantePago(placaVehiculo, datosCarro, metodoPago):
     pdf.cell(200, 7, txt="Código QR de Validación:", ln=1)
     pdf.image("temp_qr.png", x=10, y=110, w=40, h=40)
     pdf.output(nombreFactura)
-    
     return nombreFactura
+
+def generarVoucherEntrada(placaVehiculo, marcaVehiculo, colorVehiculo, tipoEspacio, codigoEspacio):
+    """
+    Genera un archivo PDF tipo Voucher al parquear un vehículo en un espacio verde.
+    Crea un código QR dinámico con el formato Placa-Marca-Tipo-FechaHoraEntrada.
+    """
+    ahora = datetime.now()
+    fechaStr = ahora.strftime("%d-%m-%Y")
+    horaEntradaStr = ahora.strftime("%H_%M")
+    horaPantalla = ahora.strftime("%H:%M")
+    nombreVoucher = "voucher_#" + placaVehiculo + "_" + fechaStr + "_" + horaEntradaStr + ".pdf"
+    fechaHoraEntradaCombo = fechaStr + " " + horaPantalla
+    contenidoQr = placaVehiculo + "-" + marcaVehiculo + "-" + tipoEspacio + "-" + fechaHoraEntradaCombo
+    imgQr = qrcode.make(contenidoQr)
+    imgQr.save("temp_voucher_qr.png")
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", style="B", size=14)
+    pdf.cell(200, 10, txt="PARQUEADERO", ln=1, align="C")
+    
+    pdf.set_font("Arial", size=11)
+    pdf.cell(200, 8, txt="su mejor eleccion", ln=1, align="C")
+    pdf.ln(10)
+    
+    pdf.set_font("Arial", style="B", size=12)
+    pdf.cell(200, 10, txt=" VOUCHER DE INGRESO A PARQUEO", ln=1, align="L")
+    pdf.set_font("Arial", size=11)
+    pdf.ln(4)
+    
+    pdf.cell(200, 7, txt="Placa Vehiculo: " + placaVehiculo, ln=1)
+    pdf.cell(200, 7, txt="Marca Seleccionada: " + marcaVehiculo, ln=1)
+    pdf.cell(200, 7, txt="Color: " + colorVehiculo, ln=1)
+    pdf.cell(200, 7, txt="Tipo de Espacio Asignado: " + tipoEspacio + " (" + codigoEspacio + ")", ln=1)
+    pdf.cell(200, 7, txt="Fecha y Hora Ingreso: " + fechaHoraEntradaCombo, ln=1)
+    pdf.ln(10)
+    
+    pdf.cell(200, 7, txt="Codigo QR de Entrada (Escanear al salir):", ln=1)
+    pdf.image("temp_voucher_qr.png", x=10, y=95, w=40, h=40)
+    
+    pdf.output(nombreVoucher)
+    return nombreVoucher
