@@ -1,21 +1,30 @@
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import simpledialog
+from tkinter import ttk
 import random
 from conexionapi import obtenerVehiculosApi
 from baseDatos import guardarEnDisco, cargarDesdeDisco
 from estacionamiento import Estacionamiento
+from factura import generarComprobantePago
 
 class VentanaParqueo:
     def __init__(self):
         self.ventana = tk.Tk()
-        self.ventana.title("Parqueo \"LOS DE LA TAREA PROGRAMADA AURA\"")
+        self.ventana.title("Parqueo \"El TEC\"")
         self.ventana.geometry("850x520")
         self.ventana.config(bg="#f0f0f0")
-        cantidadEspacios = simpledialog.askinteger("Configuración Inicial", "¿Cuántos parqueos tiene su estacionamiento?" )
+        
+        cantidadEspacios = simpledialog.askinteger(
+            "Configuración Inicial", 
+            "¿Cuántos parqueos tiene su estacionamiento?")
         if cantidadEspacios is None or cantidadEspacios <= 0:
-            cantidadEspacios = 75  
-        tieneElectricos = messagebox.askyesno( "Configuración Eléctrica", "¿Su parqueo posee espacios exclusivos para vehículos eléctricos?")
+            cantidadEspacios = 75
+            
+        tieneElectricos = messagebox.askyesno(
+            "Configuración Eléctrica",
+            "¿Su parqueo posee espacios exclusivos para vehículos eléctricos?")
+        
         self.vehiculosActuales = cargarDesdeDisco()
         self.botonesMatriz = {}
         self.ventanaEmergente = None
@@ -83,7 +92,6 @@ class VentanaParqueo:
         self.lblOcupados.pack(side=tk.LEFT, padx=40)
 
     def crearMapaParqueo(self, contenedorPadre):
-        """Dibuja una zona de parqueo deslizable con Scrollbar para ver todos los espacios."""
         frameMapaEstructura = tk.LabelFrame(contenedorPadre, text="Distribución de Espacios (Sensores de Techo)", padx=5, pady=5, bg="#f0f0f0")
         frameMapaEstructura.pack(side=tk.LEFT, fill="both", expand=True, padx=5)
         
@@ -154,7 +162,6 @@ class VentanaParqueo:
         lblBano.pack(anchor="w", pady=2)
 
     def eventoCargarVehiculos(self):
-        """TRADUCTOR DE API: Convierte la respuesta cruda de Mockaroo al formato estructurado del sistema."""
         try:
             respuestaApi = obtenerVehiculosApi()
             if isinstance(respuestaApi, dict):
@@ -251,39 +258,95 @@ class VentanaParqueo:
                 
         self.ventanaEmergente = tk.Toplevel(self.ventana)
         self.ventanaEmergente.title("Espacio " + str(codigoEspacio))
-        self.ventanaEmergente.geometry("320x280")
+        self.ventanaEmergente.geometry("360x320")
+        self.ventanaEmergente.config(bg="#f8f9fa")
         
         if vehiculoEncontrado:
-            tk.Label(self.ventanaEmergente, text=" VEHÍCULO DETECTADO ", font=("Arial", 11, "bold"), fg="red").pack(pady=10)
-            tk.Label(self.ventanaEmergente, text="Placa: " + str(placaEncontrada)).pack(anchor="w", padx=20)
-            tk.Label(self.ventanaEmergente, text="Marca: " + str(vehiculoEncontrado[0])).pack(anchor="w", padx=20)
-            tk.Label(self.ventanaEmergente, text="Color: " + str(vehiculoEncontrado[1])).pack(anchor="w", padx=20)
-            tk.Label(self.ventanaEmergente, text="Entrada: " + str(vehiculoEncontrado[4])).pack(anchor="w", padx=20)
+            tk.Label(self.ventanaEmergente, text="OBSERVANDO ESPACIO", font=("Arial", 11, "bold"), fg="red", bg="#f8f9fa").pack(pady=10)
+            formFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
+            formFrame.pack(padx=20, fill="x")
+            tk.Label(formFrame, text="Placa:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="w", pady=4)
+            entPlaca = tk.Entry(formFrame, width=20, font=("Arial", 10))
+            entPlaca.insert(0, placaEncontrada)
+            entPlaca.config(state="readonly")
+            entPlaca.grid(row=0, column=1, padx=10, pady=4)
+            
+            tk.Label(formFrame, text="Marca:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", pady=4)
+            entMarca = tk.Entry(formFrame, width=20, font=("Arial", 10))
+            entMarca.insert(0, vehiculoEncontrado[0])
+            entMarca.config(state="readonly")
+            entMarca.grid(row=1, column=1, padx=10, pady=4)
+            
+            tk.Label(formFrame, text="Color:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="w", pady=4)
+            entColor = tk.Entry(formFrame, width=20, font=("Arial", 10))
+            entColor.insert(0, vehiculoEncontrado[1])
+            entColor.config(state="readonly")
+            entColor.grid(row=2, column=1, padx=10, pady=4)
+            
+            tk.Label(formFrame, text="Hora entrada:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="w", pady=4)
+            entEntrada = tk.Entry(formFrame, width=20, font=("Arial", 10))
+            entEntrada.insert(0, vehiculoEncontrado[4])
+            entEntrada.config(state="readonly")
+            entEntrada.grid(row=3, column=1, padx=10, pady=4)
             
             self.placaPorFacturar = placaEncontrada
-            tk.Button(self.ventanaEmergente, text="Liberar y Pagar", bg="green", fg="white", command=self.pagarDesdeClic).pack(pady=10)
-            tk.Button(self.ventanaEmergente, text="Solo Observar", command=self.ventanaEmergente.destroy).pack(pady=5)
+            
+            btnFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
+            btnFrame.pack(pady=15)
+            
+            tk.Button(btnFrame, text="Pagar", bg="#28a745", fg="white", font=("Arial", 10, "bold"), width=10, command=self.solicitarMetodoPago).pack(side=tk.LEFT, padx=10)
+            tk.Button(btnFrame, text="Regresar", bg="#6c757d", fg="white", font=("Arial", 10), width=10, command=self.ventanaEmergente.destroy).pack(side=tk.LEFT, padx=10)
+            
         else:
-            tk.Label(self.ventanaEmergente, text=" REGISTRO MANUAL (" + str(codigoEspacio) + ") ", font=("Arial", 11, "bold"), fg="green").pack(pady=10)
-            tk.Label(self.ventanaEmergente, text="Placa:").pack(anchor="w", padx=20)
+            tk.Label(self.ventanaEmergente, text="--- REGISTRO MANUAL (" + str(codigoEspacio) + ") ---", font=("Arial", 11, "bold"), fg="green", bg="#f8f9fa").pack(pady=10)
+            tk.Label(self.ventanaEmergente, text="Placa:", bg="#f8f9fa").pack(anchor="w", padx=20)
             self.entradaPlaca = tk.Entry(self.ventanaEmergente)
             self.entradaPlaca.pack(fill="x", padx=20)
             
-            tk.Label(self.ventanaEmergente, text="Marca:").pack(anchor="w", padx=20)
+            tk.Label(self.ventanaEmergente, text="Marca:", bg="#f8f9fa").pack(anchor="w", padx=20)
             self.entradaMarca = tk.Entry(self.ventanaEmergente)
             self.entradaMarca.pack(fill="x", padx=20)
             
-            tk.Label(self.ventanaEmergente, text="Color:").pack(anchor="w", padx=20)
+            tk.Label(self.ventanaEmergente, text="Color:", bg="#f8f9fa").pack(anchor="w", padx=20)
             self.entradaColor = tk.Entry(self.ventanaEmergente)
             self.entradaColor.pack(fill="x", padx=20)
             
             tk.Button(self.ventanaEmergente, text="Registrar", command=self.guardarManual).pack(pady=15)
 
-    def pagarDesdeClic(self):
+    def solicitarMetodoPago(self):
+        ventanaPago = tk.Toplevel(self.ventanaEmergente)
+        ventanaPago.title("Seleccionar Método de Pago")
+        ventanaPago.geometry("300x180")
+        
+        tk.Label(ventanaPago, text="Seleccione el método de pago:", font=("Arial", 10, "bold")).pack(pady=15)
+        
+        comboPago = ttk.Combobox(ventanaPago, values=["Efectivo", "SINPE", "Tarjeta"], state="readonly")
+        comboPago.set("Efectivo")
+        comboPago.pack(pady=10)
+        
+        def procesar():
+            metodo = comboPago.get()
+            self.ejecutarLiberacionYFactura(metodo)
+            ventanaPago.destroy()
+            
+        tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
+
+    def ejecutarLiberacionYFactura(self, metodoPago):
+        """Saca el vehículo de la base de datos y delega la creación del PDF/QR real al archivo externo."""
         datosCarro = self.vehiculosActuales.pop(self.placaPorFacturar)
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
-        messagebox.showinfo("Salida", "Cobro procesado. El espacio " + str(datosCarro[3]) + " paso a luz VERDE.")
+        
+        try:
+            nombreFacturaEmitida = generarComprobantePago(self.placaPorFacturar, datosCarro, metodoPago)
+            
+            messagebox.showinfo(
+                "Factura Generada", 
+                "Cobro procesado por " + str(metodoPago) + ".\nEspacio " + str(datosCarro[3]) + " pasó a luz VERDE.\n\nDocumento emitido: " + nombreFacturaEmitida)
+        except Exception as error:
+            messagebox.showerror(
+                "Error en Facturación", 
+                "No se pudo compilar el archivo PDF con su respectivo código QR.\nDetalle: " + str(error))
         self.ventanaEmergente.destroy()
 
     def guardarManual(self):
@@ -304,7 +367,7 @@ class VentanaParqueo:
         self.ventanaFactura.title("Facturación de Vehículo")
         self.ventanaFactura.geometry("350x200")
         
-        tk.Label(self.ventanaFactura, text=" SALIDA DE VEHÍCULO ", font=("Arial", 11, "bold")).pack(pady=10)
+        tk.Label(self.ventanaFactura, text="--- SALIDA DE VEHÍCULO ---", font=("Arial", 11, "bold")).pack(pady=10)
         tk.Label(self.ventanaFactura, text="Digite la Placa del vehículo:").pack(anchor="w", padx=30)
         self.entradaBusqueda = tk.Entry(self.ventanaFactura, font=("Arial", 11))
         self.entradaBusqueda.pack(fill="x", padx=30, pady=5)
@@ -324,8 +387,7 @@ class VentanaParqueo:
             tk.Label(self.ventanaFactura, text="Vehículo: " + str(datosCarro[0]) + " (" + str(datosCarro[1]) + ")", font=("Arial", 10)).pack(pady=2)
             tk.Label(self.ventanaFactura, text="Espacio Liberado: " + str(datosCarro[3]), font=("Arial", 10)).pack(pady=2)
             tk.Label(self.ventanaFactura, text="Monto Total a Pagar: ₡" + str(datosCarro[6]), font=("Arial", 11, "bold"), fg="darkgreen").pack(pady=5)
-            
-            tk.Button(self.ventanaFactura, text="Confirmar Pago y Salida", bg="green", fg="white", command=self.confirmarSalida).pack(pady=10)
+            tk.Button(self.ventanaFactura, text="Confirmar Pago y Salida", bg="green", fg="white", command=self.solicitarMetodoPago).pack(pady=10)
         else:
             messagebox.showerror("Error", "La placa digitada no se encuentra activa en el parqueo.")
 
@@ -354,14 +416,14 @@ class VentanaParqueo:
         ventanaStats.geometry("380x250")
         ventanaStats.config(bg="#f0f0f0")
         
-        tk.Label(ventanaStats, text=" ESTADÍSTICAS DEL PARQUEO ", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=15)
+        tk.Label(ventanaStats, text="--- ESTADÍSTICAS DEL PARQUEO ---", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=15)
         tk.Label(ventanaStats, text="Total de ingresos proyectados: ₡" + str(totalDineroCaja), font=("Arial", 10, "bold"), fg="darkgreen", bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
         tk.Label(ventanaStats, text="Vehículos ingresados por carga masiva: " + str(conteoMasivo), font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
         tk.Label(ventanaStats, text="Vehículos ingresados manualmente: " + str(conteoManual), font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
         
         tk.Button(ventanaStats, text="Entendido", command=ventanaStats.destroy, width=12).pack(pady=20)
 
-    def mostrarVentana(self):
+    def mostrarWindow(self):
         self.ventana.mainloop()
 
 def arrancarPrograma():
@@ -371,7 +433,8 @@ def arrancarPrograma():
     pagoPrueba = {"monto": 2500, "estado": "Pagado"}
     unEstacionamiento = Estacionamiento("EST-001", infoPrueba, estadiaPrueba, pagoPrueba)
     unEstacionamiento.mostrarDatos()
-    print("el programa se esta abriendo")
+    
+    print("Abriendo sensores del estacionamiento...")
     entornoInteractivo = VentanaParqueo()
-    entornoInteractivo.mostrarVentana()
+    entornoInteractivo.mostrarWindow()
 arrancarPrograma()
