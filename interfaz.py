@@ -492,8 +492,9 @@ class VentanaParqueo:
 
     def ejecutarCierreDiarioYFacturacionEnMasa(self, ventanaEstadisticas):
         """
-        Recorre todos los vehículos estacionados, calcula sus montos, 
-        genera facturas individuales en masa y libera el parqueo completo.
+        Recorre todos los vehiculos estacionados, calcula sus montos, 
+        guarda un reporte manual en formato CSV, genera 
+        facturas individuales en masa y libera el parqueo completo.
         """
         if not self.vehiculosActuales:
             messagebox.showinfo("Cierre Diario", "No hay vehiculos activos en el parqueo para facturar.")
@@ -501,12 +502,28 @@ class VentanaParqueo:
         confirmar = messagebox.askyesno(
             "Confirmar Cierre Diario", 
             "¿Esta seguro de que desea realizar el cierre diario?\n" +
-            "Esto facturara en masa todos los vehiculos y vaciara el parqueo.")
+            "Esto exportara el archivo CSV y vaciara el parqueo.")
         if not confirmar:
             return
         placasActivas = list(self.vehiculosActuales.keys())
         totalVehiculosFacturados = len(placasActivas)
         montoTotalCierre = 0
+        try:
+            archivo = open("cierreDiario.csv", "w", encoding="utf-8")
+            for placa in placasActivas:
+                datos = self.vehiculosActuales[placa]
+                marca = str(datos[0])
+                color = str(datos[1])
+                tipo = str(datos[2])
+                espacio = str(datos[3])
+                horaIn = str(datos[4])
+                monto = str(datos[6])
+                fila = placa + "," + marca + "," + color + "," + tipo + "," + espacio + "," + horaIn + "," + monto + "\n"
+                archivo.write(fila)
+            archivo.close()
+        except Exception as errorArchivo:
+            messagebox.showerror("No se pudo exportar el archivo CSV manual: " + str(errorArchivo))
+            return
         for placa in placasActivas:
             datosCarro = self.vehiculosActuales[placa]
             montoTotalCierre = montoTotalCierre + datosCarro[6]
@@ -518,12 +535,12 @@ class VentanaParqueo:
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
         ventanaEstadisticas.destroy()
-        mensajeExito = (
-            "CIERRE DIARIO\n\n" + "Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
+        mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierre_diario.csv' generado (sin titulos) con exito.\n" +"Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
         messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
+
     def mostrarWindow(self):
         self.ventana.mainloop()
-
+        
 def arrancarPrograma():
     print("Sistema de Administración de Estacionamiento")
     infoPrueba = {"placa": "BCB-123", "marca": "Toyota"}
