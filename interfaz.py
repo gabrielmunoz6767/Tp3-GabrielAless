@@ -16,25 +16,28 @@ class VentanaParqueo:
         self.ventana.title("Parqueo \"LOS QUE TENEMOS BASTANTE AURILLA\"")
         self.ventana.geometry("850x520")
         self.ventana.config(bg="#f0f0f0")
+        self.ventana.withdraw() # aqui se oculta temporal mente la ventana 
         
         cantidadEspacios = simpledialog.askinteger(
-            "Configuración Inicial", 
-            "¿Cuántos parqueos tiene su estacionamiento?")
+            "Configuracion Inicial", 
+            "¿Cuantos parqueos tiene su estacionamiento?")
         if cantidadEspacios is None or cantidadEspacios <= 0:
             cantidadEspacios = 75
             
         tieneElectricos = messagebox.askyesno(
-            "Configuración Eléctrica",
-            "¿Su parqueo posee espacios exclusivos para vehículos eléctricos?")
+            "Configuracion Electrica",
+            "¿Su parqueo posee espacios exclusivos para vehiculos electricos?")
+
+        self.ventana.deiconify() # aqui se muestra de nuevo
         
         self.vehiculosActuales = cargarDesdeDisco()
         self.botonesMatriz = {}
         self.ventanaEmergente = None
         self.entradaPlaca = None
-        self.comboMarca = None  # Cambiado a combo
-        self.comboColor = None  # Cambiado a combo
-        self.entradaHoraEntrada = None  #  Nueva caja de texto de solo lectura
-        self.tipoEspacioActualSeleccionado = ""  # Guardar tipo dinámicamente
+        self.comboMarca = None  
+        self.comboColor = None  
+        self.entradaHoraEntrada = None  
+        self.tipoEspacioActualSeleccionado = ""  
         self.codigoEspacioActual = ""
         self.ventanaFactura = None
         self.entradaBusqueda = None
@@ -313,26 +316,25 @@ class VentanaParqueo:
             formFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
             formFrame.pack(padx=20, fill="x")
             
-            # 1. Caja de Texto para Placa
+            # 1. Caja de Texto para Placa 
             tk.Label(formFrame, text="Placa:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="w", pady=5)
             self.entradaPlaca = tk.Entry(formFrame, font=("Arial", 10), width=22)
-            self.entradaPlaca.pack_forget() # Limpieza estructural
             self.entradaPlaca.grid(row=0, column=1, pady=5)
             
-            # 2. Caja de Selección para Marcas 
+            # 2. Caja de Seleccion para Marcas 
             marcasDisponiblesApi = ["Toyota", "Hyundai", "Nissan", "Honda", "Suzuki", "Ford", "BYD"]
             tk.Label(formFrame, text="Marca:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", pady=5)
             self.comboMarca = ttk.Combobox(formFrame, values=marcasDisponiblesApi, state="readonly", width=20, font=("Arial", 10))
             self.comboMarca.set("Toyota")
             self.comboMarca.grid(row=1, column=1, pady=5)
             
-            # 3. Caja de Selección para Colores 
+            # 3. Caja de Seleccion para Colores 
             coloresPool = ["Gris", "Blanco", "Negro", "Rojo", "Azul", "Plata"]
             for p, v in self.vehiculosActuales.items():
                 if v[1] not in coloresPool:
                     coloresPool.append(v[1])
             tk.Label(formFrame, text="Color:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="w", pady=5)
-            self.comboColor = ttk.Combobox(formFrame, values=coloresPool, font=("Arial", 10), width=20)
+            self.comboColor = ttk.Combobox(formFrame, values=coloresPool, font=("Arial", 10), width=20, state="readonly")
             self.comboColor.set("Gris")
             self.comboColor.grid(row=2, column=1, pady=5)
             
@@ -344,7 +346,7 @@ class VentanaParqueo:
             self.entradaHoraEntrada.config(state="readonly")
             self.entradaHoraEntrada.grid(row=3, column=1, pady=5)
             
-            # Botones de estacionar regresasr
+            # Botones de estacionar regresar
             btnFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
             btnFrame.pack(pady=20)
             tk.Button(btnFrame, text="Estacionar", bg="#007bff", fg="white", font=("Arial", 10, "bold"), width=12, command=self.guardarManual).pack(side=tk.LEFT, padx=10)
@@ -386,19 +388,18 @@ class VentanaParqueo:
         self.ventanaEmergente.destroy()
 
     def guardarManual(self):
-        """Procesa el botón Estacionar, actualiza la estructura, guarda en disco y llama a generarVoucherEntrada"""
+        """Procesa el boton Estacionar, actualiza la estructura, guarda en disco y llama a generarVoucherEntrada"""
         p = self.entradaPlaca.get().strip().upper()
         m = self.comboMarca.get()
-        c = self.comboColor.get().strip()
+        c = self.comboColor.get() 
         horaIn = self.entradaHoraEntrada.get()
         if not p or not c:
-            messagebox.showwarning("Atención", "Por favor ingrese la placa y seleccione un color.")
+            messagebox.showwarning("Atencion", "Por favor ingrese la placa y seleccione un color.")
             return
         patronLetrasNum = r"^[A-Z]{3}-\d{3}$"
         patronSoloNum = r"^\d{1,8}$"
         if not (re.match(patronLetrasNum, p) or re.match(patronSoloNum, p)):
-            mensajeErrorPlaca = (
-                "Formato de placa inválido o contiene caracteres especiales.\n\n" "Formatos permitidos en Costa Rica:\n"" Tres letras, guion y tres números (Ej: ABC-123)\n"" Solo números de hasta 8 dígitos (Ej: 582491)")
+            mensajeErrorPlaca = ("Formato de placa invalido o contiene caracteres especiales.\n\n" + "Formatos permitidos:\n" + " Tres letras, guion y tres numeros (Ej: ABC-123)\n" + " Solo numeros de hasta 8 digitos (Ej: 582491)" )
             messagebox.showwarning("Placa Incorrecta", mensajeErrorPlaca)
             return
         self.vehiculosActuales[p] = [m, c, "Manual", self.codigoEspacioActual, horaIn, "00:00", 1000, "Pendiente"]
@@ -406,12 +407,11 @@ class VentanaParqueo:
             nombreVoucher = generarVoucherEntrada(p, m, c, self.tipoEspacioActualSeleccionado, self.codigoEspacioActual)
             guardarEnDisco(self.vehiculosActuales)
             self.actualizarMapa()
-            mensajeExito = "¡Vehículo Estacionado!\n\nEl espacio " + self.codigoEspacioActual + " pasó a color ROJO.\nSe informa verbalmente que el costo es de ₡1000 por hora.\n\nVoucher creado: " + nombreVoucher
+            mensajeExito = ("Vehiculo Estacionado!\n\n" + "El espacio " + self.codigoEspacioActual + " paso a color ROJO.\n" + "Se informa verbalmente que el costo es de C1000 por hora.\n\n" + "Voucher creado: " + nombreVoucher )
             messagebox.showinfo("Espacio Reservado", mensajeExito)
             self.ventanaEmergente.destroy()
         except Exception as error:
-            messagebox.showerror(
-                "Ha ocurrido un probelam",  "No se pudo compilar el archivo del Voucher PDF.\nDetalle: " + str(error))
+            messagebox.showerror("Error de Voucher", "No se pudo compilar el archivo del Voucher PDF.\nDetalle: " + str(error))
 
     def eventoFacturar(self):
         self.ventanaFactura = tk.Toplevel(self.ventana)
@@ -462,7 +462,7 @@ class VentanaParqueo:
                 conteoManual = conteoManual + 1
         ventanaStats = tk.Toplevel(self.ventana)
         ventanaStats.title("Modulo de Reportes y Cierre")
-        ventanaStats.geometry("400x320")
+        ventanaStats.geometry("400x380")
         ventanaStats.config(bg="#f8f9fa")
         
         tk.Label(ventanaStats, text="PANEL DE REPORTES", font=("Arial", 12, "bold"), bg="#f8f9fa", fg="#333333").pack(pady=12)
@@ -487,8 +487,17 @@ class VentanaParqueo:
             pady=6,
             command=lambda: self.ejecutarCierreDiarioYFacturacionEnMasa(ventanaStats))
         btnCierre.pack(pady=5)
-        
-        tk.Button(ventanaStats, text="Cerrar Panel", command=ventanaStats.destroy, width=12, font=("Arial", 9)).pack(pady=(10, 0))
+        btnVerParqueo = tk.Button(
+            ventanaStats,
+            text="Ver Parqueo",
+            font=("Arial", 10),
+            bg="#007bff",
+            fg="white",
+            width=25,
+            pady=4,
+            command=ventanaStats.destroy)
+        btnVerParqueo.pack(pady=5)
+        tk.Button(ventanaStats, text="Cerrar Panel", command=ventanaStats.destroy, width=12, font=("Arial", 9)).pack(pady=(15, 0))
 
     def ejecutarCierreDiarioYFacturacionEnMasa(self, ventanaEstadisticas):
         """
@@ -535,7 +544,7 @@ class VentanaParqueo:
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
         ventanaEstadisticas.destroy()
-        mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierre_diario.csv' generado (sin titulos) con exito.\n" +"Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
+        mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierre_diario.csv' generado con exito.\n" +"Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
         messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
 
     def mostrarWindow(self):
@@ -549,7 +558,7 @@ def arrancarPrograma():
     unEstacionamiento = Estacionamiento("EST-001", infoPrueba, estadiaPrueba, pagoPrueba)
     unEstacionamiento.mostrarDatos()
     
-    print("Abriendo sensores del estacionamiento...")
+    print("Abriendo interfaz")
     entornoInteractivo = VentanaParqueo()
     entornoInteractivo.mostrarWindow()
 arrancarPrograma()
