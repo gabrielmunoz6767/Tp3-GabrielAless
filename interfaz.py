@@ -71,11 +71,11 @@ class VentanaParqueo:
             numEspacio = numEspacio + 1
         numRegular = 1
         for i in range(cantidadRegulares):
-            self.estructuraEspacios.append(("R" + str(numRegular), "Regular", "#e0e0e0"))
+            self.estructuraEspacios.append(("R" + str(numRegular), "Regular", "#00fc2a"))
             numRegular = numRegular + 1
         numEspecial = 1
         for i in range(cantidadEspeciales):
-            self.estructuraEspacios.append(("L" + str(numEspecial), "Especial", "#ffeb3b"))
+            self.estructuraEspacios.append(("L" + str(numEspecial), "Especial", "#1c05ed"))
             numEspecial = numEspecial + 1
         self.crearContadoresSuperiores()
         frameInferior = tk.Frame(self.ventana, bg="#f0f0f0")
