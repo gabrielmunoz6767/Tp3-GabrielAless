@@ -453,7 +453,6 @@ class VentanaParqueo:
         totalDineroCaja = 0
         conteoMasivo = 0
         conteoManual = 0
-        
         for placa in self.vehiculosActuales:
             datosCarro = self.vehiculosActuales[placa]
             totalDineroCaja = totalDineroCaja + datosCarro[6]
@@ -461,19 +460,67 @@ class VentanaParqueo:
                 conteoMasivo = conteoMasivo + 1
             elif datosCarro[2] == "Manual":
                 conteoManual = conteoManual + 1
-                
         ventanaStats = tk.Toplevel(self.ventana)
-        ventanaStats.title("Reportes Generals")
-        ventanaStats.geometry("380x250")
-        ventanaStats.config(bg="#f0f0f0")
+        ventanaStats.title("Modulo de Reportes y Cierre")
+        ventanaStats.geometry("400x320")
+        ventanaStats.config(bg="#f8f9fa")
         
-        tk.Label(ventanaStats, text="--- ESTADÍSTICAS DEL PARQUEO ---", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=15)
-        tk.Label(ventanaStats, text="Total de ingresos proyectados: ₡" + str(totalDineroCaja), font=("Arial", 10, "bold"), fg="darkgreen", bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
-        tk.Label(ventanaStats, text="Vehículos ingresados por carga masiva: " + str(conteoMasivo), font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
-        tk.Label(ventanaStats, text="Vehículos ingresados manualmente: " + str(conteoManual), font=("Arial", 10), bg="#f0f0f0").pack(anchor="w", padx=30, pady=5)
+        tk.Label(ventanaStats, text="PANEL DE REPORTES", font=("Arial", 12, "bold"), bg="#f8f9fa", fg="#333333").pack(pady=12)
         
-        tk.Button(ventanaStats, text="Entendido", command=ventanaStats.destroy, width=12).pack(pady=20)
+        frameDatos = tk.LabelFrame(ventanaStats, text=" Estado Actual ", bg="#f8f9fa", padx=15, pady=10, font=("Arial", 9, "bold"))
+        frameDatos.pack(fill="x", padx=20)
+        
+        tk.Label(frameDatos, text="Ingresos acumulados en parqueo: C" + str(totalDineroCaja), font=("Arial", 10, "bold"), fg="darkgreen", bg="#f8f9fa").pack(anchor="w", pady=4)
+        tk.Label(frameDatos, text="Vehiculos por carga masiva activos: " + str(conteoMasivo), font=("Arial", 10), bg="#f8f9fa", fg="#555555").pack(anchor="w", pady=2)
+        tk.Label(frameDatos, text="Vehiculos por ingreso manual activos: " + str(conteoManual), font=("Arial", 10), bg="#f8f9fa", fg="#555555").pack(anchor="w", pady=2)
+        
+        lblSeccionA = tk.Label(ventanaStats, text="a. Cierre Diario y Facturacion en Masa", font=("Arial", 10, "bold"), bg="#f8f9fa", fg="#0056b3")
+        lblSeccionA.pack(anchor="w", padx=20, pady=(15, 5))
+        
+        btnCierre = tk.Button(
+            ventanaStats, 
+            text="Ejecutar Cierre Diario", 
+            font=("Arial", 10, "bold"),
+            bg="#dc3545", 
+            fg="white", 
+            width=25,
+            pady=6,
+            command=lambda: self.ejecutarCierreDiarioYFacturacionEnMasa(ventanaStats))
+        btnCierre.pack(pady=5)
+        
+        tk.Button(ventanaStats, text="Cerrar Panel", command=ventanaStats.destroy, width=12, font=("Arial", 9)).pack(pady=(10, 0))
 
+    def ejecutarCierreDiarioYFacturacionEnMasa(self, ventanaEstadisticas):
+        """
+        Recorre todos los vehículos estacionados, calcula sus montos, 
+        genera facturas individuales en masa y libera el parqueo completo.
+        """
+        if not self.vehiculosActuales:
+            messagebox.showinfo("Cierre Diario", "No hay vehiculos activos en el parqueo para facturar.")
+            return
+        confirmar = messagebox.askyesno(
+            "Confirmar Cierre Diario", 
+            "¿Esta seguro de que desea realizar el cierre diario?\n" +
+            "Esto facturara en masa todos los vehiculos y vaciara el parqueo.")
+        if not confirmar:
+            return
+        placasActivas = list(self.vehiculosActuales.keys())
+        totalVehiculosFacturados = len(placasActivas)
+        montoTotalCierre = 0
+        for placa in placasActivas:
+            datosCarro = self.vehiculosActuales[placa]
+            montoTotalCierre = montoTotalCierre + datosCarro[6]
+            try:
+                generarComprobantePago(placa, datosCarro, "Efectivo (Cierre)")
+                self.vehiculosActuales.pop(placa)
+            except Exception as e:
+                print("Error procesando factura en lote para " + str(placa) + ": " + str(e))
+        guardarEnDisco(self.vehiculosActuales)
+        self.actualizarMapa()
+        ventanaEstadisticas.destroy()
+        mensajeExito = (
+            "CIERRE DIARIO\n\n" + "Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
+        messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
     def mostrarWindow(self):
         self.ventana.mainloop()
 
