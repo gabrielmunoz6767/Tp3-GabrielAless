@@ -159,6 +159,8 @@ class VentanaParqueo:
         
         btnFacturar = tk.Button(frameBotones, text="Facturar", width=18, pady=5, command=self.eventoFacturar)
         btnFacturar.pack(pady=5)
+        btnAcercaDe = tk.Button(frameBotones, text="Acerca de", width=18, pady=5, command=self.eventoAcercaDe)
+        btnAcercaDe.pack(pady=5)
         frameFisico = tk.LabelFrame(frameLateral, text="Instalaciones Físicas", padx=10, pady=10, bg="#e8e8e8")
         frameFisico.pack(side=tk.BOTTOM, fill="x", pady=10)
         
@@ -546,7 +548,18 @@ class VentanaParqueo:
         ventanaEstadisticas.destroy()
         mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierre_diario.csv' generado con exito.\n" +"Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
         messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
-
+    def eventoAcercaDe(self):
+        ventanaInfo = tk.Toplevel(self.ventana)
+        ventanaInfo.title("Acerca de")
+        ventanaInfo.geometry("350x250")
+        ventanaInfo.config(bg="#f0f0f0")
+        tk.Label(ventanaInfo, text="Sistema de Parqueo", font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#333333").pack(pady=15)
+        tk.Label(ventanaInfo, text="Desarrollado por:", font=("Arial", 10), bg="#f0f0f0").pack()
+        tk.Label(ventanaInfo, text="Gabriel Aless", font=("Arial", 11, "bold"), bg="#f0f0f0", fg="#007bff").pack(pady=5)
+        tk.Label(ventanaInfo, text="Taller de Programación - I Semestre 2026", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack(pady=5)
+        tk.Label(ventanaInfo, text="Escuela de Ingeniería en Computación", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack()
+        tk.Label(ventanaInfo, text="TEC - Costa Rica", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack(pady=5)
+        tk.Button(ventanaInfo, text="Regresar", bg="#6c757d", fg="white", width=12, command=ventanaInfo.destroy).pack(pady=15)
     def mostrarWindow(self):
         self.ventana.mainloop()
         
