@@ -161,6 +161,8 @@ class VentanaParqueo:
         btnFacturar.pack(pady=5)
         btnAcercaDe = tk.Button(frameBotones, text="Acerca de", width=18, pady=5, command=self.eventoAcercaDe)
         btnAcercaDe.pack(pady=5)
+        btnConfiguracion = tk.Button(frameBotones, text="Configuración", width=18, pady=5, command=self.eventoConfiguracion)
+        btnConfiguracion.pack(pady=5)
         frameFisico = tk.LabelFrame(frameLateral, text="Instalaciones Físicas", padx=10, pady=10, bg="#e8e8e8")
         frameFisico.pack(side=tk.BOTTOM, fill="x", pady=10)
         
@@ -555,11 +557,42 @@ class VentanaParqueo:
         ventanaInfo.config(bg="#f0f0f0")
         tk.Label(ventanaInfo, text="Sistema de Parqueo", font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#333333").pack(pady=15)
         tk.Label(ventanaInfo, text="Desarrollado por:", font=("Arial", 10), bg="#f0f0f0").pack()
-        tk.Label(ventanaInfo, text="Gabriel Aless", font=("Arial", 11, "bold"), bg="#f0f0f0", fg="#007bff").pack(pady=5)
+        tk.Label(ventanaInfo, text="Gabriel, Alessandro Arias", font=("Arial", 11, "bold"), bg="#f0f0f0", fg="#007bff").pack(pady=5)
         tk.Label(ventanaInfo, text="Taller de Programación - I Semestre 2026", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack(pady=5)
         tk.Label(ventanaInfo, text="Escuela de Ingeniería en Computación", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack()
         tk.Label(ventanaInfo, text="TEC - Costa Rica", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack(pady=5)
         tk.Button(ventanaInfo, text="Regresar", bg="#6c757d", fg="white", width=12, command=ventanaInfo.destroy).pack(pady=15)
+    def eventoConfiguracion(self):
+        ventanaConfig = tk.Toplevel(self.ventana)
+        ventanaConfig.title("Configuración del Parqueo")
+        ventanaConfig.geometry("380x320")
+        ventanaConfig.config(bg="#f0f0f0")
+        
+        tk.Label(ventanaConfig, text="CONFIGURACIÓN", font=("Arial", 12, "bold"), bg="#f0f0f0", fg="#333333").grid(row=0, column=0, columnspan=2, pady=12)
+        
+        tk.Label(ventanaConfig, text="Tamaño del estacionamiento:", bg="#f0f0f0", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", padx=20, pady=8)
+        self.entTamano = tk.Entry(ventanaConfig, font=("Arial", 10), width=15)
+        self.entTamano.insert(0, str(len(self.estructuraEspacios)))
+        self.entTamano.grid(row=1, column=1, padx=10, pady=8)
+        
+        tk.Label(ventanaConfig, text="Tiempo de gracia (minutos):", bg="#f0f0f0", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="w", padx=20, pady=8)
+        self.entGracia = tk.Entry(ventanaConfig, font=("Arial", 10), width=15)
+        self.entGracia.insert(0, "5")
+        self.entGracia.grid(row=2, column=1, padx=10, pady=8)
+        
+        tk.Label(ventanaConfig, text="Monto por hora (colones):", bg="#f0f0f0", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="w", padx=20, pady=8)
+        self.entMonto = tk.Entry(ventanaConfig, font=("Arial", 10), width=15)
+        self.entMonto.insert(0, "1000")
+        self.entMonto.grid(row=3, column=1, padx=10, pady=8)
+        
+        self.ventanaConfig = ventanaConfig
+        tk.Button(ventanaConfig, text="Guardar", bg="#28a745", fg="white", font=("Arial", 10, "bold"), width=12, command=self.guardarConfiguracion).grid(row=4, column=0, columnspan=2, pady=20)
+
+    def guardarConfiguracion(self):
+        confirmar = messagebox.askyesno("Confirmar", "¿Desea guardar los cambios de configuración?")
+        if confirmar:
+            messagebox.showinfo("Configuración", "Configuración guardada correctamente.")
+            self.ventanaConfig.destroy()
     def mostrarWindow(self):
         self.ventana.mainloop()
         
