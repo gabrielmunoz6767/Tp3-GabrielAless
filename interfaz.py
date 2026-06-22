@@ -480,7 +480,19 @@ class VentanaParqueo:
         
         lblSeccionA = tk.Label(ventanaStats, text="a. Cierre Diario y Facturacion en Masa", font=("Arial", 10, "bold"), bg="#f8f9fa", fg="#0056b3")
         lblSeccionA.pack(anchor="w", padx=20, pady=(15, 5))
+        lblSeccionB = tk.Label(ventanaStats, text="b. Cierre por Tipo de Pago (XML)", font=("Arial", 10, "bold"), bg="#f8f9fa", fg="#0056b3")
+        lblSeccionB.pack(anchor="w", padx=20, pady=(10, 5))
         
+        btnXml = tk.Button(
+            ventanaStats,
+            text="Exportar XML por Tipo de Pago",
+            font=("Arial", 10, "bold"),
+            bg="#6f42c1",
+            fg="white",
+            width=25,
+            pady=6,
+            command=self.generarXmlPorTipoPago)
+        btnXml.pack(pady=5)
         btnCierre = tk.Button(
             ventanaStats, 
             text="Ejecutar Cierre Diario", 
@@ -593,6 +605,39 @@ class VentanaParqueo:
         if confirmar:
             messagebox.showinfo("Configuración", "Configuración guardada correctamente.")
             self.ventanaConfig.destroy()
+    def generarXmlPorTipoPago(self):
+        efectivo = ""
+        sinpe = ""
+        tarjeta = ""
+        for placa in self.vehiculosActuales:
+            datos = self.vehiculosActuales[placa]
+            linea = ("<vehiculo>"
+                + "<placa>" + placa + "</placa>"
+                + "<marca>" + str(datos[0]) + "</marca>"
+                + "<color>" + str(datos[1]) + "</color>"
+                + "<tipo>" + str(datos[2]) + "</tipo>"
+                + "<espacio>" + str(datos[3]) + "</espacio>"
+                + "<horaEntrada>" + str(datos[4]) + "</horaEntrada>"
+                + "<horaSalida>" + str(datos[5]) + "</horaSalida>"
+                + "<monto>" + str(datos[6]) + "</monto>"
+                + "<tipoPago>" + str(datos[7]) + "</tipoPago>"
+                + "</vehiculo>\n")
+            if str(datos[7]).lower() == "sinpe":
+                sinpe = sinpe + linea
+            elif str(datos[7]).lower() == "tarjeta":
+                tarjeta = tarjeta + linea
+            else:
+                efectivo = efectivo + linea
+        contenidoXml = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            + "<cierrePorTipoPago>\n"
+            + "  <efectivo>\n" + efectivo + "  </efectivo>\n"
+            + "  <sinpe>\n" + sinpe + "  </sinpe>\n"
+            + "  <tarjeta>\n" + tarjeta + "  </tarjeta>\n"
+            + "</cierrePorTipoPago>")
+        archivo = open("cierrePorTipoPago.xml", "w", encoding="utf-8")
+        archivo.write(contenidoXml)
+        archivo.close()
+        messagebox.showinfo("XML Generado", "Archivo 'cierrePorTipoPago.xml' guardado correctamente.")
     def mostrarWindow(self):
         self.ventana.mainloop()
         
