@@ -102,8 +102,9 @@ class VentanaParqueo:
         frameMapaEstructura = tk.Frame(contenedorPadre, bg="#f0f0f0")
         frameMapaEstructura.pack(side=tk.LEFT, fill="both", expand=True, padx=5)
         
-        canvasScroll = tk.Canvas(frameMapaEstructura, bg="#f0f0f0", highlightthickness=0)
-        canvasScroll.pack(side=tk.TOP, fill="both", expand=True)
+        # Le damos un tamaño inicial razonable al Canvas para que no intente crecer al infinito
+        canvasScroll = tk.Canvas(frameMapaEstructura, bg="#f0f0f0", highlightthickness=0, width=750, height=500)
+        canvasScroll.pack(side=tk.LEFT, fill="both", expand=True)
         
         barraDesplazamiento = tk.Scrollbar(frameMapaEstructura, orient=tk.VERTICAL, command=canvasScroll.yview)
         barraDesplazamiento.pack(side=tk.RIGHT, fill="y")
@@ -113,7 +114,9 @@ class VentanaParqueo:
         frameCuadricula = tk.Frame(canvasScroll, bg="#f0f0f0")
         idVentanaCanvas = canvasScroll.create_window((0, 0), window=frameCuadricula, anchor="nw")
         
+        # Este evento se dispara cuando la cuadrícula interna cambia de tamaño (agrega botones)
         def ajustarRegionScroll(evento):
+            # Forzamos al Canvas a reconocer el área total exacta de los botones
             canvasScroll.configure(scrollregion=canvasScroll.bbox("all"))
         frameCuadricula.bind("<Configure>", ajustarRegionScroll)
         
@@ -165,8 +168,27 @@ class VentanaParqueo:
             btn.grid(row=filaInterna, column=columnaInterna, padx=4, pady=(0, 80), sticky="nsew")
             self.botonesMatriz[codigo] = btn
 
-        self.ventana.update_idletasks()
-        self.ventana.geometry("")
+        anchoCalculado = self.ventana.winfo_width()
+        altoCalculado = self.ventana.winfo_height()
+        
+        anchoMaximo = 1050
+        altoMaximo = 650
+        
+        nuevoAncho = min(anchoCalculado, anchoMaximo)
+        nuevoAlto = min(altoCalculado, altoMaximo)
+        
+        self.ventana.geometry(str(nuevoAncho) + "x" + str(nuevoAlto))
+        
+        def scrollConMouse(evento):
+            '''
+            funcionamiento: esto esta buenisimo, esto lo que hace es que basicamente puedo usar el mouse para que pueda scrollear
+            '''
+            if evento.num == 5 or evento.delta == -120:  # Hacia abajo
+                canvasScroll.yview_scroll(1, "units")
+            elif evento.num == 4 or evento.delta == 120:  # Hacia arriba
+                canvasScroll.yview_scroll(-1, "units")
+                
+        self.ventana.bind_all("<MouseWheel>", scrollConMouse)
 
     def crearMenuBotones(self, contenedorPadre):
         frameLateral = tk.Frame(contenedorPadre, bg="#f0f0f0")
@@ -367,11 +389,13 @@ class VentanaParqueo:
             btnFrame.pack(pady=20)
             tk.Button(btnFrame, text="Estacionar", bg="#007bff", fg="white", font=("Arial", 10, "bold"), width=12, command=self.guardarManual).pack(side=tk.LEFT, padx=10)
             tk.Button(btnFrame, text="Regresar", bg="#6c757d", fg="white", font=("Arial", 10), width=12, command=self.ventanaEmergente.destroy).pack(side=tk.LEFT, padx=10)
+
     def solicitarMetodoPago(self):
-        ventanaPago = tk.Toplevel(self.ventanaEmergente)
+        ventanaPadre = self.ventanaFactura if (self.ventanaFactura and self.ventanaFactura.winfo_exists()) else self.ventanaEmergente
+        ventanaPago = tk.Toplevel(ventanaPadre)
         ventanaPago.title("Seleccionar Método de Pago")
         ventanaPago.geometry("300x180")
-        
+
         tk.Label(ventanaPago, text="Seleccione el método de pago:", font=("Arial", 10, "bold")).pack(pady=15)
         
         comboPago = ttk.Combobox(ventanaPago, values=["Efectivo", "SINPE", "Tarjeta"], state="readonly")
@@ -382,6 +406,8 @@ class VentanaParqueo:
             metodo = comboPago.get()
             self.ejecutarLiberacionYFactura(metodo)
             ventanaPago.destroy()
+            
+        tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
             
         tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
 
@@ -400,7 +426,11 @@ class VentanaParqueo:
             messagebox.showerror(
                 "Error en Facturación", 
                 "No se pudo compilar el archivo PDF con su respectivo código QR.\nDetalle: " + str(error))
-        self.ventanaEmergente.destroy()
+        
+        if self.ventanaFactura and self.ventanaFactura.winfo_exists(): # winfo_exist lo que hace genuinamente es que retornara true si la ventana de factura existe
+            self.ventanaFactura.destroy()
+        if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
+            self.ventanaEmergente.destroy()
 
     def guardarManual(self):
         p = self.entradaPlaca.get().strip().upper()
@@ -428,33 +458,52 @@ class VentanaParqueo:
             messagebox.showerror("Error de Voucher", "No se pudo compilar el archivo del Voucher PDF.\nDetalle: " + str(error))
 
     def eventoFacturar(self):
+        if not self.vehiculosActuales:
+            messagebox.showinfo("Facturación", "No hay vehículos activos en el parqueo para facturar.")
+            return
         self.ventanaFactura = tk.Toplevel(self.ventana)
         self.ventanaFactura.title("Facturación de Vehículo")
-        self.ventanaFactura.geometry("350x200")
+        self.ventanaFactura.geometry("350x220")
+        self.ventanaFactura.config(bg="#f0f0f0")
         
-        tk.Label(self.ventanaFactura, text="--- SALIDA DE VEHÍCULO ---", font=("Arial", 11, "bold")).pack(pady=10)
-        tk.Label(self.ventanaFactura, text="Digite la Placa del vehículo:").pack(anchor="w", padx=30)
-        self.entradaBusqueda = tk.Entry(self.ventanaFactura, font=("Arial", 11))
+        tk.Label(self.ventanaFactura, text="--- SALIDA DE VEHÍCULO ---", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=10)
+        tk.Label(self.ventanaFactura, text="Seleccione la Placa del vehículo:", bg="#f0f0f0").pack(anchor="w", padx=30)
+        
+        placasActivas = sorted(list(self.vehiculosActuales.keys()))
+        
+        self.entradaBusqueda = ttk.Combobox(self.ventanaFactura, values=placasActivas, state="readonly", font=("Arial", 11))
         self.entradaBusqueda.pack(fill="x", padx=30, pady=5)
+        self.entradaBusqueda.set(placasActivas[0]) 
         
-        self.btnBuscar = tk.Button(self.ventanaFactura, text="Buscar y Facturar", command=self.buscarYProcesar)
+        self.btnBuscar = tk.Button(self.ventanaFactura, text="Cargar Datos y Facturar", command=self.buscarYProcesar)
         self.btnBuscar.pack(pady=15)
 
     def buscarYProcesar(self):
-        placaBuscar = self.entradaBusqueda.get().strip().upper()
+        placaBuscar = self.entradaBusqueda.get()
+        if not placaBuscar:
+            messagebox.showwarning("Atención", "Por favor, seleccione una placa de la lista.")
+            return
+            
         if placaBuscar in self.vehiculosActuales:
             datosCarro = self.vehiculosActuales[placaBuscar]
             self.placaPorFacturar = placaBuscar
             
+            confirmar = messagebox.askyesno(
+                "Confirmar Selección", 
+                "¿Está seguro de que desea procesar la salida del vehículo con placa " + placaBuscar + "?")
+            if not confirmar:
+                return 
+                
             self.entradaBusqueda.pack_forget()
             self.btnBuscar.pack_forget()
             
-            tk.Label(self.ventanaFactura, text="Vehículo: " + str(datosCarro[0]) + " (" + str(datosCarro[1]) + ")", font=("Arial", 10)).pack(pady=2)
-            tk.Label(self.ventanaFactura, text="Espacio Liberado: " + str(datosCarro[3]), font=("Arial", 10)).pack(pady=2)
-            tk.Label(self.ventanaFactura, text="Monto Total a Pagar: ₡" + str(datosCarro[6]), font=("Arial", 11, "bold"), fg="darkgreen").pack(pady=5)
-            tk.Button(self.ventanaFactura, text="Confirmar Pago y Salida", bg="green", fg="white", command=self.solicitarMetodoPago).pack(pady=10)
+            tk.Label(self.ventanaFactura, text="Vehículo: " + str(datosCarro[0]) + " (" + str(datosCarro[1]) + ")", font=("Arial", 10), bg="#f0f0f0").pack(pady=2)
+            tk.Label(self.ventanaFactura, text="Espacio Liberado: " + str(datosCarro[3]), font=("Arial", 10), bg="#f0f0f0").pack(pady=2)
+            tk.Label(self.ventanaFactura, text="Monto Total a Pagar: ₡" + str(datosCarro[6]), font=("Arial", 11, "bold"), fg="darkgreen", bg="#f0f0f0").pack(pady=5)
+            
+            tk.Button(self.ventanaFactura, text="Confirmar Pago y Salida", bg="green", fg="white", font=("Arial", 10, "bold"), command=self.solicitarMetodoPago).pack(pady=10)
         else:
-            messagebox.showerror("ha ocurrido un problema", "La placa digitada no se encuentra activa en el parqueo.")
+            messagebox.showerror("Ha ocurrido un problema", "La placa seleccionada ya no se encuentra activa.")
 
     def confirmarSalida(self):
         datosCarro = self.vehiculosActuales.pop(self.placaPorFacturar)
