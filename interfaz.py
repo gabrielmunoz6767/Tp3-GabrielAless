@@ -14,9 +14,9 @@ class VentanaParqueo:
     def __init__(self):
         self.ventana = tk.Tk()
         self.ventana.title("Parqueo \"LOS QUE TENEMOS BASTANTE AURILLA\"")
-        self.ventana.geometry("850x520")
+        self.ventana.geometry("950x550")
         self.ventana.config(bg="#f0f0f0")
-        self.ventana.withdraw() # aqui se oculta temporal mente la ventana 
+        self.ventana.withdraw() 
         
         cantidadEspacios = simpledialog.askinteger(
             "Configuracion Inicial", 
@@ -28,7 +28,7 @@ class VentanaParqueo:
             "Configuracion Electrica",
             "¿Su parqueo posee espacios exclusivos para vehiculos electricos?")
 
-        self.ventana.deiconify() # aqui se muestra de nuevo
+        self.ventana.deiconify()
         
         self.vehiculosActuales = cargarDesdeDisco()
         self.botonesMatriz = {}
@@ -70,7 +70,7 @@ class VentanaParqueo:
         self.cantidadRegularesImprimir = cantidadRegulares
         numEspacio = 1
         for i in range(cantidadElectricos):
-            self.estructuraEspacios.append(("E" + str(numEspacio), "Eléctrico", "#add8e6"))
+            self.estructuraEspacios.append(("E" + str(numEspacio), "Eléctrico", "#00fc2a"))
             numEspacio = numEspacio + 1
         numRegular = 1
         for i in range(cantidadRegulares):
@@ -78,7 +78,7 @@ class VentanaParqueo:
             numRegular = numRegular + 1
         numEspecial = 1
         for i in range(cantidadEspeciales):
-            self.estructuraEspacios.append(("L" + str(numEspecial), "Especial", "#1c05ed"))
+            self.estructuraEspacios.append(("L" + str(numEspecial), "Especial", "#00fc2a"))
             numEspecial = numEspecial + 1
         self.crearContadoresSuperiores()
         frameInferior = tk.Frame(self.ventana, bg="#f0f0f0")
@@ -99,11 +99,11 @@ class VentanaParqueo:
         self.lblOcupados.pack(side=tk.LEFT, padx=40)
 
     def crearMapaParqueo(self, contenedorPadre):
-        frameMapaEstructura = tk.LabelFrame(contenedorPadre, text="Distribución de Espacios (Sensores de Techo)", padx=5, pady=5, bg="#f0f0f0")
+        frameMapaEstructura = tk.Frame(contenedorPadre, bg="#f0f0f0")
         frameMapaEstructura.pack(side=tk.LEFT, fill="both", expand=True, padx=5)
         
         canvasScroll = tk.Canvas(frameMapaEstructura, bg="#f0f0f0", highlightthickness=0)
-        canvasScroll.pack(side=tk.LEFT, fill="both", expand=True)
+        canvasScroll.pack(side=tk.TOP, fill="both", expand=True)
         
         barraDesplazamiento = tk.Scrollbar(frameMapaEstructura, orient=tk.VERTICAL, command=canvasScroll.yview)
         barraDesplazamiento.pack(side=tk.RIGHT, fill="y")
@@ -120,26 +120,53 @@ class VentanaParqueo:
         def ajustarAnchoVentana(evento):
             canvasScroll.itemconfig(idVentanaCanvas, width=evento.width)
         canvasScroll.bind("<Configure>", ajustarAnchoVentana)
-        posicion = 0
-        totalEspacios = len(self.estructuraEspacios)
-        filasNecesarias = (totalEspacios // 4) + 1
-        for f in range(filasNecesarias):
-            for c in range(4):
-                if posicion < totalEspacios:
-                    codigo, tipo, colorLibre = self.estructuraEspacios[posicion]
-                    btn = tk.Button(
-                        frameCuadricula, 
-                        text=codigo, 
-                        font=("Arial", 9, "bold"),
-                        width=10, 
-                        height=2,
-                        relief=tk.GROOVE,
-                        command=lambda cod=codigo: self.eventoClickEspacio(cod))
-                    btn.grid(row=f, column=c, padx=8, pady=6, sticky="nsew")
-                    self.botonesMatriz[codigo] = btn
-                    posicion = posicion + 1
-        for columnaIndex in range(4):
-            frameCuadricula.grid_columnconfigure(columnaIndex, weight=1)
+
+        frameElectricos = tk.LabelFrame(frameCuadricula, text="Vehículos Eléctricos", font=("Arial", 10, "bold"), padx=10, pady=10, bg="#f0f0f0")
+        frameElectricos.pack(fill="x", padx=10, pady=10)
+        
+        frameRegulares = tk.LabelFrame(frameCuadricula, text="Vehículos Regulares", font=("Arial", 10, "bold"), padx=10, pady=10, bg="#f0f0f0")
+        frameRegulares.pack(fill="x", padx=10, pady=10)
+        
+        frameEspeciales = tk.LabelFrame(frameCuadricula, text="Vehículos Especiales", font=("Arial", 10, "bold"), padx=10, pady=10, bg="#f0f0f0")
+        frameEspeciales.pack(fill="x", padx=10, pady=10)
+        
+        contadorElectricos = 0
+        contadorRegulares = 0
+        contadorEspeciales = 0
+        limitePorFila = 10
+        
+        for codigo, tipo, colorLibre in self.estructuraEspacios:
+            if tipo == "Eléctrico":
+                contenedorSeccion = frameElectricos
+                indiceActual = contadorElectricos
+                contadorElectricos += 1
+            elif tipo == "Regular":
+                contenedorSeccion = frameRegulares
+                indiceActual = contadorRegulares
+                contadorRegulares += 1
+            else:
+                contenedorSeccion = frameEspeciales
+                indiceActual = contadorEspeciales
+                contadorEspeciales += 1
+                
+            filaInterna = indiceActual // limitePorFila
+            columnaInterna = indiceActual % limitePorFila
+                
+            btn = tk.Button(
+                contenedorSeccion, 
+                text=codigo, 
+                font=("Arial", 9, "bold"),
+                width=6,     
+                height=7,
+                relief=tk.FLAT,
+                bd=0,
+                command=lambda cod=codigo: self.eventoClickEspacio(cod))
+            
+            btn.grid(row=filaInterna, column=columnaInterna, padx=4, pady=(0, 80), sticky="nsew")
+            self.botonesMatriz[codigo] = btn
+
+        self.ventana.update_idletasks()
+        self.ventana.geometry("")
 
     def crearMenuBotones(self, contenedorPadre):
         frameLateral = tk.Frame(contenedorPadre, bg="#f0f0f0")
@@ -247,10 +274,10 @@ class VentanaParqueo:
                     estaOcupado = True
                     break
             if estaOcupado:
-                boton.config(bg="red", fg="white")
+                boton.config(bg="#ff0000", fg="white", activebackground="#cc0000", activeforeground="white")
                 contadorOcupados += 1
             else:
-                boton.config(bg=colorLibre, fg="black")
+                boton.config(bg="#00fc2a", fg="black", activebackground="#00cc22", activeforeground="black")
                 
         contadorDisponibles = len(self.estructuraEspacios) - contadorOcupados
         self.lblDisponibles.config(text="Disponibles: " + str(contadorDisponibles))
@@ -320,19 +347,16 @@ class VentanaParqueo:
             formFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
             formFrame.pack(padx=20, fill="x")
             
-            # 1. Caja de Texto para Placa 
             tk.Label(formFrame, text="Placa:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="w", pady=5)
             self.entradaPlaca = tk.Entry(formFrame, font=("Arial", 10), width=22)
             self.entradaPlaca.grid(row=0, column=1, pady=5)
             
-            # 2. Caja de Seleccion para Marcas 
             marcasDisponiblesApi = ["Toyota", "Hyundai", "Nissan", "Honda", "Suzuki", "Ford", "BYD"]
             tk.Label(formFrame, text="Marca:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", pady=5)
             self.comboMarca = ttk.Combobox(formFrame, values=marcasDisponiblesApi, state="readonly", width=20, font=("Arial", 10))
             self.comboMarca.set("Toyota")
             self.comboMarca.grid(row=1, column=1, pady=5)
             
-            # 3. Caja de Seleccion para Colores 
             coloresPool = ["Gris", "Blanco", "Negro", "Rojo", "Azul", "Plata"]
             for p, v in self.vehiculosActuales.items():
                 if v[1] not in coloresPool:
@@ -342,7 +366,6 @@ class VentanaParqueo:
             self.comboColor.set("Gris")
             self.comboColor.grid(row=2, column=1, pady=5)
             
-            # 4. Hora entrada 
             horaReloj = datetime.now().strftime("%H:%M")
             tk.Label(formFrame, text="Hora Entrada:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="w", pady=5)
             self.entradaHoraEntrada = tk.Entry(formFrame, font=("Arial", 10), width=22)
@@ -350,7 +373,6 @@ class VentanaParqueo:
             self.entradaHoraEntrada.config(state="readonly")
             self.entradaHoraEntrada.grid(row=3, column=1, pady=5)
             
-            # Botones de estacionar regresar
             btnFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
             btnFrame.pack(pady=20)
             tk.Button(btnFrame, text="Estacionar", bg="#007bff", fg="white", font=("Arial", 10, "bold"), width=12, command=self.guardarManual).pack(side=tk.LEFT, padx=10)
@@ -392,7 +414,6 @@ class VentanaParqueo:
         self.ventanaEmergente.destroy()
 
     def guardarManual(self):
-        """Procesa el boton Estacionar, actualiza la estructura, guarda en disco y llama a generarVoucherEntrada"""
         p = self.entradaPlaca.get().strip().upper()
         m = self.comboMarca.get()
         c = self.comboColor.get() 
@@ -516,11 +537,6 @@ class VentanaParqueo:
         tk.Button(ventanaStats, text="Cerrar Panel", command=ventanaStats.destroy, width=12, font=("Arial", 9)).pack(pady=(15, 0))
 
     def ejecutarCierreDiarioYFacturacionEnMasa(self, ventanaEstadisticas):
-        """
-        Recorre todos los vehiculos estacionados, calcula sus montos, 
-        guarda un reporte manual en formato CSV, genera 
-        facturas individuales en masa y libera el parqueo completo.
-        """
         if not self.vehiculosActuales:
             messagebox.showinfo("Cierre Diario", "No hay vehiculos activos en el parqueo para facturar.")
             return
@@ -562,6 +578,7 @@ class VentanaParqueo:
         ventanaEstadisticas.destroy()
         mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierre_diario.csv' generado con exito.\n" +"Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
         messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
+
     def eventoAcercaDe(self):
         ventanaInfo = tk.Toplevel(self.ventana)
         ventanaInfo.title("Acerca de")
@@ -574,6 +591,7 @@ class VentanaParqueo:
         tk.Label(ventanaInfo, text="Escuela de Ingeniería en Computación", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack()
         tk.Label(ventanaInfo, text="TEC - Costa Rica", font=("Arial", 9), bg="#f0f0f0", fg="#666666").pack(pady=5)
         tk.Button(ventanaInfo, text="Regresar", bg="#6c757d", fg="white", width=12, command=ventanaInfo.destroy).pack(pady=15)
+
     def eventoConfiguracion(self):
         ventanaConfig = tk.Toplevel(self.ventana)
         ventanaConfig.title("Configuración del Parqueo")
@@ -605,6 +623,7 @@ class VentanaParqueo:
         if confirmar:
             messagebox.showinfo("Configuración", "Configuración guardada correctamente.")
             self.ventanaConfig.destroy()
+
     def generarXmlPorTipoPago(self):
         efectivo = ""
         sinpe = ""
@@ -638,6 +657,7 @@ class VentanaParqueo:
         archivo.write(contenidoXml)
         archivo.close()
         messagebox.showinfo("XML Generado", "Archivo 'cierrePorTipoPago.xml' guardado correctamente.")
+        
     def mostrarWindow(self):
         self.ventana.mainloop()
         
