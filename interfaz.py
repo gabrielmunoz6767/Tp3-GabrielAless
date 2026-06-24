@@ -43,6 +43,8 @@ class VentanaParqueo:
         self.entradaBusqueda = None
         self.btnBuscar = None
         self.placaPorFacturar = ""
+        self.tiempoGracia = 15  
+        self.montoPorHora = 1000 
         
         self.estructuraEspacios = []
             
@@ -81,10 +83,11 @@ class VentanaParqueo:
             self.estructuraEspacios.append(("L" + str(numEspecial), "Especial", "#00fc2a"))
             numEspecial = numEspecial + 1
         self.crearContadoresSuperiores()
-        frameInferior = tk.Frame(self.ventana, bg="#f0f0f0")
-        frameInferior.pack(fill="both", expand=True, padx=10, pady=10)
-        self.crearMapaParqueo(frameInferior)
-        self.crearMenuBotones(frameInferior)
+        self.frameInferior = tk.Frame(self.ventana, bg="#f0f0f0")
+        self.frameInferior.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        self.crearMapaParqueo(self.frameInferior)
+        self.crearMenuBotones(self.frameInferior)
         self.actualizarMapa()
 
     def crearContadoresSuperiores(self):
@@ -631,36 +634,121 @@ class VentanaParqueo:
         tk.Button(ventanaInfo, text="Regresar", bg="#6c757d", fg="white", width=12, command=ventanaInfo.destroy).pack(pady=15)
 
     def eventoConfiguracion(self):
-        ventanaConfig = tk.Toplevel(self.ventana)
-        ventanaConfig.title("Configuración del Parqueo")
-        ventanaConfig.geometry("380x320")
-        ventanaConfig.config(bg="#f0f0f0")
+        ventanaMenu = tk.Toplevel(self.ventana)
+        ventanaMenu.title("Menú de Configuración")
+        ventanaMenu.geometry("360x280")
+        ventanaMenu.config(bg="#f8f9fa")
+        ventanaMenu.resizable(False, False)
+        tk.Label(
+            ventanaMenu, 
+            text="CONFIGURACIÓN DEL SISTEMA", 
+            font=("Arial", 11, "bold"), 
+            bg="#f8f9fa", 
+            fg="#333333").pack(pady=15)
+        frameOpciones = tk.Frame(ventanaMenu, bg="#f8f9fa")
+        frameOpciones.pack(fill="both", expand=True, padx=40)
         
-        tk.Label(ventanaConfig, text="CONFIGURACIÓN", font=("Arial", 12, "bold"), bg="#f0f0f0", fg="#333333").grid(row=0, column=0, columnspan=2, pady=12)
-        
-        tk.Label(ventanaConfig, text="Tamaño del estacionamiento:", bg="#f0f0f0", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", padx=20, pady=8)
-        self.entTamano = tk.Entry(ventanaConfig, font=("Arial", 10), width=15)
-        self.entTamano.insert(0, str(len(self.estructuraEspacios)))
-        self.entTamano.grid(row=1, column=1, padx=10, pady=8)
-        
-        tk.Label(ventanaConfig, text="Tiempo de gracia (minutos):", bg="#f0f0f0", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="w", padx=20, pady=8)
-        self.entGracia = tk.Entry(ventanaConfig, font=("Arial", 10), width=15)
-        self.entGracia.insert(0, "5")
-        self.entGracia.grid(row=2, column=1, padx=10, pady=8)
-        
-        tk.Label(ventanaConfig, text="Monto por hora (colones):", bg="#f0f0f0", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="w", padx=20, pady=8)
-        self.entMonto = tk.Entry(ventanaConfig, font=("Arial", 10), width=15)
-        self.entMonto.insert(0, "1000")
-        self.entMonto.grid(row=3, column=1, padx=10, pady=8)
-        
-        self.ventanaConfig = ventanaConfig
-        tk.Button(ventanaConfig, text="Guardar", bg="#28a745", fg="white", font=("Arial", 10, "bold"), width=12, command=self.guardarConfiguracion).grid(row=4, column=0, columnspan=2, pady=20)
+        def modificarEspacios():
+            cantidadActual = len(self.estructuraEspacios)
+            nuevaCantidad = simpledialog.askinteger(
+                "Modificar Tamaño", 
+                "Espacios actuales: " + str(cantidadActual) + "\n\nIngrese la nueva cantidad de espacios totales:",
+                initialvalue=cantidadActual)
+            if nuevaCantidad is not None and nuevaCantidad > 0:
+                self.recalcularEstructuraParqueo(nuevaCantidad)
+                ventanaMenu.destroy()
 
-    def guardarConfiguracion(self):
-        confirmar = messagebox.askyesno("Confirmar", "¿Desea guardar los cambios de configuración?")
-        if confirmar:
-            messagebox.showinfo("Configuración", "Configuración guardada correctamente.")
-            self.ventanaConfig.destroy()
+        def modificarGracia():
+            nuevoTiempo = simpledialog.askinteger(
+                "Modificar Tiempo de Gracia", 
+                "Tiempo actual: " + str(self.tiempoGracia) + " minutos.\n\nIngrese el nuevo tiempo de gracia (en minutos):",
+                initialvalue=self.tiempoGracia)
+            if nuevoTiempo is not None and nuevoTiempo >= 0:
+                self.tiempoGracia = nuevoTiempo
+                messagebox.showinfo("Configuración", "Tiempo de gracia actualizado a: " + str(self.tiempoGracia) + " minutos.")
+                ventanaMenu.destroy()
+
+        def modificarTarifa():
+            nuevoMonto = simpledialog.askinteger(
+                "Modificar Tarifa", 
+                "Monto actual: ₡" + str(self.montoPorHora) + " por hora.\n\nIngrese el nuevo monto por hora (en colones):",
+                initialvalue=self.montoPorHora)
+            if nuevoMonto is not None and nuevoMonto >= 0:
+                self.montoPorHora = nuevoMonto
+                messagebox.showinfo("Configuración", "Tarifa por hora actualizada a: ₡" + str(self.montoPorHora))
+                ventanaMenu.destroy()
+
+        cantidadActualTotal = len(self.estructuraEspacios)
+        btnEspacios = tk.Button(
+            frameOpciones, 
+            text="1. Tamaño del Parqueo (" + str(cantidadActualTotal) + " espacios)", 
+            anchor="w", font=("Arial", 10), pady=4, command=modificarEspacios)
+        btnEspacios.pack(fill="x", pady=6)
+        
+        btnGracia = tk.Button(
+            frameOpciones, 
+            text="2. Tiempo de Gracia (" + str(self.tiempoGracia) + " min)", 
+            anchor="w", font=("Arial", 10), pady=4, command=modificarGracia)
+        btnGracia.pack(fill="x", pady=6)
+        
+        btnTarifa = tk.Button(
+            frameOpciones, 
+            text="3. Monto por Hora (₡" + str(self.montoPorHora) + ")", 
+            anchor="w", font=("Arial", 10), pady=4, command=modificarTarifa)
+        btnTarifa.pack(fill="x", pady=6)
+        
+        btnSalir = tk.Button(
+            frameOpciones, 
+            text="Regresar al Mapa", 
+            bg="#6c757d", fg="white", font=("Arial", 10, "bold"), command=ventanaMenu.destroy)
+        btnSalir.pack(fill="x", pady=15)
+
+    def recalcularEstructuraParqueo(self, nuevaCantidad):
+        tieneElectricos = messagebox.askyesno(
+            "Configuración Eléctrica",
+            "¿Su parqueo posee espacios exclusivos para vehículos eléctricos?")
+        
+        self.estructuraEspacios = []
+        self.botonesMatriz = {}
+        
+        multiplicacionEspeciales = nuevaCantidad * 0.05
+        enteroEspeciales = int(multiplicacionEspeciales)
+        if multiplicacionEspeciales > enteroEspeciales:
+            cantidadEspeciales = enteroEspeciales + 1
+        else:
+            cantidadEspeciales = enteroEspeciales
+        if nuevaCantidad == 20 and not tieneElectricos:
+            cantidadEspeciales = 1
+        elif cantidadEspeciales < 2 and nuevaCantidad <= 20:
+            cantidadEspeciales = 2
+        cantidadElectricos = 1 if tieneElectricos else 0
+        cantidadRegulares = nuevaCantidad - cantidadEspeciales - cantidadElectricos
+        multiplicacionReserva = cantidadRegulares * 0.05
+        enteroReserva = int(multiplicacionReserva)
+        if multiplicacionReserva > enteroReserva:
+            reservaSeguridad = enteroReserva + 1
+        else:
+            reservaSeguridad = enteroReserva
+        self.topeMaximoMasivo = cantidadRegulares - reservaSeguridad
+        self.cantidadRegularesImprimir = cantidadRegulares
+        numEspacio = 1
+        for i in range(cantidadElectricos):
+            self.estructuraEspacios.append(("E" + str(numEspacio), "Eléctrico", "#00fc2a"))
+            numEspacio += 1
+        numRegular = 1
+        for i in range(cantidadRegulares):
+            self.estructuraEspacios.append(("R" + str(numRegular), "Regular", "#00fc2a"))
+            numRegular += 1
+        numEspecial = 1
+        for i in range(cantidadEspeciales):
+            self.estructuraEspacios.append(("L" + str(numEspecial), "Especial", "#00fc2a"))
+            numEspecial += 1
+        for elemento in self.frameInferior.winfo_children():
+            elemento.destroy()
+        self.crearMapaParqueo(self.frameInferior)
+        self.crearMenuBotones(self.frameInferior)
+        self.actualizarMapa()
+        messagebox.showinfo("Configuración", "El tamaño del parqueo se ha reconfigurado a " + str(nuevaCantidad) + " espacios exitosamente.")
 
     def generarXmlPorTipoPago(self):
         efectivo = ""
