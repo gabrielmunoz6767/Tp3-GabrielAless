@@ -306,40 +306,30 @@ class VentanaParqueo:
         self.ventanaEmergente.config(bg="#f8f9fa")
         
         if vehiculoEncontrado:
-            tk.Label(self.ventanaEmergente, text="OBSERVANDO ESPACIO", font=("Arial", 11, "bold"), fg="red", bg="#f8f9fa").pack(pady=10)
+            tk.Label(self.ventanaEmergente, text="Espacio Ocupado", font=("Arial", 12, "bold"), fg="#333333", bg="#f8f9fa").pack(pady=(15, 5))
             formFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
-            formFrame.pack(padx=20, fill="x")
-            tk.Label(formFrame, text="Placa:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=0, column=0, sticky="w", pady=4)
-            entPlaca = tk.Entry(formFrame, width=20, font=("Arial", 10))
-            entPlaca.insert(0, placaEncontrada)
-            entPlaca.config(state="readonly")
-            entPlaca.grid(row=0, column=1, padx=10, pady=4)
+            formFrame.pack(padx=30, fill="x", pady=10)
             
-            tk.Label(formFrame, text="Marca:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", pady=4)
-            entMarca = tk.Entry(formFrame, width=20, font=("Arial", 10))
-            entMarca.insert(0, vehiculoEncontrado[0])
-            entMarca.config(state="readonly")
-            entMarca.grid(row=1, column=1, padx=10, pady=4)
-            
-            tk.Label(formFrame, text="Color:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="w", pady=4)
-            entColor = tk.Entry(formFrame, width=20, font=("Arial", 10))
-            entColor.insert(0, vehiculoEncontrado[1])
-            entColor.config(state="readonly")
-            entColor.grid(row=2, column=1, padx=10, pady=4)
-            
-            tk.Label(formFrame, text="Hora entrada:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=3, column=0, sticky="w", pady=4)
-            entEntrada = tk.Entry(formFrame, width=20, font=("Arial", 10))
-            entEntrada.insert(0, vehiculoEncontrado[4])
-            entEntrada.config(state="readonly")
-            entEntrada.grid(row=3, column=1, padx=10, pady=4)
+            tk.Label(formFrame, text=f"# Espacio: {codigoEspacio}", font=("Arial", 11, "bold"), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text=f"Placa: {placaEncontrada}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text=f"Marca: {vehiculoEncontrado[0]}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text=f"Color: {vehiculoEncontrado[1]}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text=f"Hora entrada: {vehiculoEncontrado[4]}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
             
             self.placaPorFacturar = placaEncontrada
             
             btnFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
-            btnFrame.pack(pady=15)
+            btnFrame.pack(fill="both", expand=True, padx=30, pady=(15, 20))
             
-            tk.Button(btnFrame, text="Pagar", bg="#28a745", fg="white", font=("Arial", 10, "bold"), width=10, command=self.solicitarMetodoPago).pack(side=tk.LEFT, padx=10)
-            tk.Button(btnFrame, text="Regresar", bg="#6c757d", fg="white", font=("Arial", 10), width=10, command=self.ventanaEmergente.destroy).pack(side=tk.LEFT, padx=10)
+            btnPagar = tk.Button(
+                btnFrame, 
+                text="Pagar", 
+                bg="#28a745",  
+                fg="white", 
+                font=("Arial", 14, "bold"), 
+                relief=tk.FLAT,
+                command=self.solicitarMetodoPago)
+            btnPagar.pack(fill="both", expand=True)
             
         else:
             tk.Label(self.ventanaEmergente, text="REGISTRO DE INGRESO (" + str(codigoEspacio) + ")", font=("Arial", 11, "bold"), fg="green", bg="#f8f9fa").pack(pady=10)
@@ -377,7 +367,6 @@ class VentanaParqueo:
             btnFrame.pack(pady=20)
             tk.Button(btnFrame, text="Estacionar", bg="#007bff", fg="white", font=("Arial", 10, "bold"), width=12, command=self.guardarManual).pack(side=tk.LEFT, padx=10)
             tk.Button(btnFrame, text="Regresar", bg="#6c757d", fg="white", font=("Arial", 10), width=12, command=self.ventanaEmergente.destroy).pack(side=tk.LEFT, padx=10)
-
     def solicitarMetodoPago(self):
         ventanaPago = tk.Toplevel(self.ventanaEmergente)
         ventanaPago.title("Seleccionar Método de Pago")
