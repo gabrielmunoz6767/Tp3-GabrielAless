@@ -466,8 +466,6 @@ class VentanaParqueo:
             ventanaPago.destroy()
             
         tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
-            
-        tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
 
     def ejecutarLiberacionYFactura(self, metodoPago):
         datosCarro = self.vehiculosActuales[self.placaPorFacturar]
@@ -489,23 +487,8 @@ class VentanaParqueo:
         if self.ventanaFactura and self.ventanaFactura.winfo_exists():
             self.ventanaFactura.destroy()
         if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
-            self.ventanaEmergente.destroy()
-            
-            try:
-                nombreFacturaEmitida = generarComprobantePago(self.placaPorFacturar, datosCarro, metodoPago)
-                
-                messagebox.showinfo(
-                    "Factura Generada", 
-                    "Cobro procesado por " + str(metodoPago) + ".\nEspacio " + str(datosCarro[3]) + " pasó a luz VERDE.\n\nDocumento emitido: " + nombreFacturaEmitida)
-            except Exception as error:
-                messagebox.showerror(
-                    "Error en Facturación", 
-                    "No se pudo compilar el archivo PDF con su respectivo código QR.\nDetalle: " + str(error))
-            
-            if self.ventanaFactura and self.ventanaFactura.winfo_exists(): # winfo_exist lo que hace genuinamente es que retornara true si la ventana de factura existe
-                self.ventanaFactura.destroy()
-            if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
-                self.ventanaEmergente.destroy()
+            self.ventanaEmergente.destroy()       
+
     def calcularMontoCobro(self, datosCarro):
         """
         Funcionalidad:
@@ -545,6 +528,11 @@ class VentanaParqueo:
         horaIn = self.entradaHoraEntrada.get()
         if not p or not c:
             messagebox.showwarning("Atencion", "Por favor ingrese la placa y seleccione un color.")
+            return
+        if p in self.vehiculosActuales:
+            messagebox.showwarning(
+                "Placa Duplicada",
+                "La placa " + p + " ya se encuentra activa en el espacio " + str(self.vehiculosActuales[p][3]) + ".\nNo puede ingresar el mismo vehiculo dos veces.")
             return
         patronLetrasNum = r"^[A-Z]{3}-\d{3}$"
         patronSoloNum = r"^\d{1,8}$"
