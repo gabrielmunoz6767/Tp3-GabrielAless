@@ -344,17 +344,27 @@ class VentanaParqueo:
             self.placaPorFacturar = placaEncontrada
             
             btnFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
-            btnFrame.pack(fill="both", expand=True, padx=30, pady=(15, 20))
+            btnFrame.pack(fill="x", padx=30, pady=(15, 20))
             
             btnPagar = tk.Button(
                 btnFrame, 
                 text="Pagar", 
                 bg="#28a745",  
                 fg="white", 
-                font=("Arial", 14, "bold"), 
+                font=("Arial", 12, "bold"), 
                 relief=tk.FLAT,
                 command=self.solicitarMetodoPago)
-            btnPagar.pack(fill="both", expand=True)
+            btnPagar.pack(side=tk.LEFT, fill="both", expand=True, padx=(0, 5))
+            
+            btnRegresar = tk.Button(
+                btnFrame,
+                text="Regresar",
+                bg="#6c757d",
+                fg="white",
+                font=("Arial", 12, "bold"),
+                relief=tk.FLAT,
+                command=self.ventanaEmergente.destroy)
+            btnRegresar.pack(side=tk.LEFT, fill="both", expand=True, padx=(5, 0))
             
         else:
             tk.Label(self.ventanaEmergente, text="REGISTRO DE INGRESO (" + str(codigoEspacio) + ")", font=("Arial", 11, "bold"), fg="green", bg="#f8f9fa").pack(pady=10)
