@@ -786,31 +786,31 @@ class VentanaParqueo:
         pagosDicc = {}
         try:
             archivo = open("cierreDiario.csv", "w", encoding="utf-8")
-            for p in listaPlacas:
-                carro = self.vehiculosActuales[p]
+            for placa in listaPlacas:
+                carro = self.vehiculosActuales[placa]
                 marca = str(carro[0])
                 color = str(carro[1])
                 tipo = str(carro[2])
                 espacio = str(carro[3])
                 horaIn = str(carro[4])
                 monto = str(carro[6])
-                fila = p + "," + marca + "," + color + "," + tipo + "," + espacio + "," + horaIn + "," + monto + "\n"
+                fila = placa + "," + marca + "," + color + "," + tipo + "," + espacio + "," + horaIn + "," + monto + "\n"
                 archivo.write(fila)
             archivo.close()
         except Exception as errorArchivo:
             messagebox.showerror("Error", "No se pudo exportar el archivo CSV manual: " + str(errorArchivo))
             return
-        for p in listaPlacas:
-            carro = self.vehiculosActuales[p]
+        for placa in listaPlacas:
+            carro = self.vehiculosActuales[placa]
             tipoPago = "Efectivo (Cierre)"
             totalCierre = totalCierre + carro[6]
             pagosDicc[tipoPago] = pagosDicc.get(tipoPago, 0) + carro[6]
-            datosReporte.append((carro[3], p, carro[4], datetime.now().strftime("%H:%M"), tipoPago, carro[6]))
+            datosReporte.append((carro[3], placa, carro[4], datetime.now().strftime("%H:%M"), tipoPago, carro[6]))
             try:
-                generarComprobantePago(p, carro, tipoPago)
-                self.vehiculosActuales.pop(p)
+                generarComprobantePago(placa, carro, tipoPago)
+                self.vehiculosActuales.pop(placa)
             except Exception as e:
-                print("Error procesando factura en lote para " + str(p) + ": " + str(e))
+                print("Error procesando factura en lote para " + str(placa) + ": " + str(e))
         nombreReporte = generarReporteCierreDiario(datosReporte, pagosDicc, totalCierre)
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
@@ -819,6 +819,16 @@ class VentanaParqueo:
         messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
 
     def eventoAcercaDe(self):
+        """
+        Funcionalidad:
+        Despliega una ventana emergente de información con los créditos del sistema,
+        especificando el nombre del software, los autores del proyecto, el curso,
+        el ciclo lectivo actual y la institución académica correspondiente.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         ventanaInfo = tk.Toplevel(self.ventana)
         ventanaInfo.title("Acerca de")
         ventanaInfo.geometry("350x250")
@@ -832,6 +842,17 @@ class VentanaParqueo:
         tk.Button(ventanaInfo, text="Regresar", bg="#6c757d", fg="white", width=12, command=ventanaInfo.destroy).pack(pady=15)
 
     def eventoConfiguracion(self):
+        """
+        Funcionalidad:
+        Despliega la interfaz gráfica de la ventana secundaria de configuración. 
+        Inicializa el contenedor visual, los títulos correspondientes y el marco 
+        donde se organizan las opciones para modificar el tamaño del parqueo, 
+        el tiempo de gracia y las tarifas.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         ventanaMenu = tk.Toplevel(self.ventana)
         ventanaMenu.title("Menú de Configuración")
         ventanaMenu.geometry("360x280")
@@ -847,6 +868,16 @@ class VentanaParqueo:
         frameOpciones.pack(fill="both", expand=True, padx=40)
         
         def modificarEspacios():
+            """
+            Funcionalidad:
+            Muestra un cuadro de diálogo interactivo para solicitar la nueva cantidad 
+            total de espacios del parqueo. Si el valor ingresado es válido, invoca al 
+            método de recalculo estructural y cierra la ventana de configuración.
+            Entrada:
+            - Ninguna
+            Salida:
+            - Ninguna
+            """
             cantidadActual = len(self.estructuraEspacios)
             nuevaCantidad = simpledialog.askinteger(
                 "Modificar Tamaño", 
@@ -857,6 +888,16 @@ class VentanaParqueo:
                 ventanaMenu.destroy()
 
         def modificarGracia():
+            """
+            Funcionalidad:
+            Abre un diálogo emergente para capturar el nuevo tiempo de gracia del 
+            parqueo en minutos. Valida que el dato no sea nulo ni negativo, actualiza 
+            el atributo correspondiente del sistema y destruye el menú secundario.
+            Entrada:
+            - Ninguna
+            Salida:
+            - Ninguna
+            """
             nuevoTiempo = simpledialog.askinteger(
                 "Modificar Tiempo de Gracia", 
                 "Tiempo actual: " + str(self.tiempoGracia) + " minutos.\n\nIngrese el nuevo tiempo de gracia (en minutos):",
@@ -867,6 +908,16 @@ class VentanaParqueo:
                 ventanaMenu.destroy()
 
         def modificarTarifa():
+            """
+        Funcionalidad:
+        Despliega un diálogo emergente para solicitar al usuario una nueva tarifa 
+        por hora. Si el monto ingresado es válido y positivo, actualiza la variable 
+        global del costo, muestra una confirmación y cierra el menú de configuración.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
             nuevoMonto = simpledialog.askinteger(
                 "Modificar Tarifa", 
                 "Monto actual: ₡" + str(self.montoPorHora) + " por hora.\n\nIngrese el nuevo monto por hora (en colones):",
@@ -902,6 +953,18 @@ class VentanaParqueo:
         btnSalir.pack(fill="x", pady=15)
 
     def recalcularEstructuraParqueo(self, nuevaCantidad):
+        """
+        Funcionalidad:
+        Reconfigura la distribución total de los espacios del parqueo (Eléctricos, 
+        Regulares y Especiales/Ley 7600) aplicando las proporciones reglamentarias y 
+        el margen de reserva de seguridad. Posteriormente, limpia los contenedores 
+        gráficos anteriores, reconstruye la interfaz visual del mapa y actualiza los 
+        estados de ocupación a verde.
+        Entrada:
+        - nuevaCantidad (int): La nueva cantidad total de espacios físicos que tendrá el parqueo.
+        Salida:
+        - Ninguna
+        """
         tieneElectricos = messagebox.askyesno(
             "Configuración Eléctrica",
             "¿Su parqueo posee espacios exclusivos para vehículos eléctricos?")
