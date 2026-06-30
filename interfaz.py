@@ -414,10 +414,27 @@ class VentanaParqueo:
             
         tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
 
-    def ejecutarLiberacionYFactura(self, metodoPago):
-        datosCarro = self.vehiculosActuales.pop(self.placaPorFacturar)
-        guardarEnDisco(self.vehiculosActuales)
-        self.actualizarMapa()
+def ejecutarLiberacionYFactura(self, metodoPago):
+    datosCarro = self.vehiculosActuales[self.placaPorFacturar]
+    datosCarro[6] = self.calcularMontoCobro(datosCarro)
+    datosCarro[5] = datetime.now().strftime("%H:%M")
+    datosCarro[7] = metodoPago
+    self.vehiculosActuales.pop(self.placaPorFacturar)
+    guardarEnDisco(self.vehiculosActuales)
+    self.actualizarMapa()
+    try:
+        nombreFacturaEmitida = generarComprobantePago(self.placaPorFacturar, datosCarro, metodoPago)
+        messagebox.showinfo(
+            "Factura Generada",
+            "Cobro procesado por " + str(metodoPago) + " (C" + str(datosCarro[6]) + ").\nEspacio " + str(datosCarro[3]) + " pasó a luz VERDE.\n\nDocumento emitido: " + nombreFacturaEmitida)
+    except Exception as error:
+        messagebox.showerror(
+            "Error en Facturación",
+            "No se pudo compilar el archivo PDF con su respectivo código QR.\nDetalle: " + str(error))
+    if self.ventanaFactura and self.ventanaFactura.winfo_exists():
+        self.ventanaFactura.destroy()
+    if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
+        self.ventanaEmergente.destroy()
         
         try:
             nombreFacturaEmitida = generarComprobantePago(self.placaPorFacturar, datosCarro, metodoPago)
@@ -434,7 +451,29 @@ class VentanaParqueo:
             self.ventanaFactura.destroy()
         if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
             self.ventanaEmergente.destroy()
-
+    def calcularMontoCobro(self, datosCarro):
+        """
+        Funcionalidad:
+        Calcula el monto a cobrar segun el tiempo transcurrido desde la entrada,
+        aplicando el tiempo de gracia configurado y la tarifa por hora vigente.
+        Entrada:
+        - datosCarro(list): registro del vehiculo, datosCarro[4] es la hora de entrada "HH:MM"
+        Salida:
+        - monto(int): monto calculado en colones (0 si aplica el tiempo de gracia)
+        """
+        ahora = datetime.now()
+        try:
+            horaEntradaObj = datetime.strptime(datosCarro[4], "%H:%M")
+            entradaCompleta = ahora.replace(hour=horaEntradaObj.hour, minute=horaEntradaObj.minute, second=0, microsecond=0)
+        except ValueError:
+            entradaCompleta = ahora
+        minutosTranscurridos = (ahora - entradaCompleta).total_seconds() / 60
+        if minutosTranscurridos < 0:
+            minutosTranscurridos = 0
+        if minutosTranscurridos <= self.tiempoGracia:
+            return 0
+        horasCobrables = math.ceil(minutosTranscurridos / 60)
+        return int(horasCobrables * self.montoPorHora)
     def guardarManual(self):
         p = self.entradaPlaca.get().strip().upper()
         m = self.comboMarca.get()
@@ -449,12 +488,12 @@ class VentanaParqueo:
             mensajeErrorPlaca = ("Formato de placa invalido o contiene caracteres especiales.\n\n" + "Formatos permitidos:\n" + " Tres letras, guion y tres numeros (Ej: ABC-123)\n" + " Solo numeros de hasta 8 digitos (Ej: 582491)" )
             messagebox.showwarning("Placa Incorrecta", mensajeErrorPlaca)
             return
-        self.vehiculosActuales[p] = [m, c, "Manual", self.codigoEspacioActual, horaIn, "00:00", 1000, "Pendiente"]
+        self.vehiculosActuales[p] = [m, c, "Manual", self.codigoEspacioActual, horaIn, "00:00", self.montoPorHora, "Pendiente"]
         try:
             nombreVoucher = generarVoucherEntrada(p, m, c, self.tipoEspacioActualSeleccionado, self.codigoEspacioActual)
             guardarEnDisco(self.vehiculosActuales)
             self.actualizarMapa()
-            mensajeExito = ("Vehiculo Estacionado!\n\n" + "El espacio " + self.codigoEspacioActual + " paso a color ROJO.\n" + "Se informa verbalmente que el costo es de C1000 por hora.\n\n" + "Voucher creado: " + nombreVoucher )
+            mensajeExito = ("Vehiculo Estacionado!\n\n" + "El espacio " + self.codigoEspacioActual + " paso a color ROJO.\n" + "Se informa verbalmente que el costo es de C" + str(self.montoPorHora) + " por hora.\n\n" + "Voucher creado: " + nombreVoucher )
             messagebox.showinfo("Espacio Reservado", mensajeExito)
             self.ventanaEmergente.destroy()
         except Exception as error:
