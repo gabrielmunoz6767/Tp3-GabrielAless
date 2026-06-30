@@ -74,3 +74,60 @@ def generarVoucherEntrada(placaVehiculo, marcaVehiculo, colorVehiculo, tipoEspac
     
     pdf.output(nombreVoucher)
     return nombreVoucher
+def generarReporteCierreDiario(listaRegistros, totalesPorTipoPago, montoTotalDia):
+    """
+    Funcionalidad:
+    Genera el reporte oficial de cierre diario en PDF, usando 3 colores y 3
+    tamanos de letra distintos para el titulo, la tabla y los totales.
+    Entrada:
+    - listaRegistros(list): lista de tuplas (ubicacion, placa, horaEntrada, horaSalida, tipoPago, monto)
+    - totalesPorTipoPago(dict): diccionario {tipoPago: montoAcumulado}
+    - montoTotalDia(int): monto total recaudado en el dia
+    Salida:
+    - nombreArchivo(str): nombre del archivo PDF generado
+    """
+    ahora = datetime.now()
+    fechaStr = ahora.strftime("%d-%m-%Y")
+    nombreArchivo = "reporte_cierre_diario_" + fechaStr + ".pdf"
+
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.set_text_color(0, 51, 102)
+    pdf.set_font("Arial", style="B", size=18)
+    pdf.cell(0, 12, txt="REPORTE DE CIERRE DIARIO", ln=1, align="C")
+
+    pdf.set_text_color(80, 80, 80)
+    pdf.set_font("Arial", style="I", size=11)
+    pdf.cell(0, 8, txt="Fecha: " + fechaStr, ln=1, align="C")
+    pdf.ln(6)
+
+    anchos = [25, 25, 25, 25, 30, 25]
+    encabezados = ["Ubicacion", "Placa", "H.Entrada", "H.Salida", "TipoPago", "Monto"]
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_fill_color(0, 51, 102)
+    pdf.set_font("Arial", style="B", size=9)
+    for i in range(len(encabezados)):
+        pdf.cell(anchos[i], 8, txt=encabezados[i], border=1, fill=True, align="C")
+    pdf.ln()
+
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Arial", size=9)
+    for fila in listaRegistros:
+        for i in range(len(fila)):
+            pdf.cell(anchos[i], 7, txt=str(fila[i]), border=1, align="C")
+        pdf.ln()
+
+    pdf.ln(8)
+    pdf.set_text_color(0, 102, 51)
+    pdf.set_font("Arial", style="B", size=11)
+    for tipoPago in totalesPorTipoPago:
+        pdf.cell(0, 7, txt="Total " + tipoPago + ": C" + str(totalesPorTipoPago[tipoPago]), ln=1)
+
+    pdf.ln(4)
+    pdf.set_text_color(153, 0, 0)
+    pdf.set_font("Arial", style="B", size=14)
+    pdf.cell(0, 10, txt="TOTAL RECAUDADO DEL DIA: C" + str(montoTotalDia), ln=1)
+
+    pdf.output(nombreArchivo)
+    return nombreArchivo

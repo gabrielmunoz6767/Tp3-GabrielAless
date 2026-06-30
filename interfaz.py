@@ -8,8 +8,8 @@ from datetime import datetime
 from conexionapi import obtenerVehiculosApi
 from baseDatos import guardarEnDisco, cargarDesdeDisco
 from estacionamiento import Estacionamiento
-from factura import generarComprobantePago, generarVoucherEntrada
-
+from factura import generarComprobantePago, generarVoucherEntrada, generarReporteCierreDiario
+import math
 class VentanaParqueo:
     def __init__(self):
         self.ventana = tk.Tk()
@@ -582,42 +582,44 @@ class VentanaParqueo:
             messagebox.showinfo("Cierre Diario", "No hay vehiculos activos en el parqueo para facturar.")
             return
         confirmar = messagebox.askyesno(
-            "Confirmar Cierre Diario", 
+            "Confirmar Cierre Diario",
             "¿Esta seguro de que desea realizar el cierre diario?\n" +
-            "Esto exportara el archivo CSV y vaciara el parqueo.")
+            "Esto exportara el archivo CSV, el reporte PDF y vaciara el parqueo.")
         if not confirmar:
             return
         placasActivas = list(self.vehiculosActuales.keys())
         totalVehiculosFacturados = len(placasActivas)
         montoTotalCierre = 0
+        listaRegistrosReporte = []
+        totalesPorTipoPago = {}
         try:
             archivo = open("cierreDiario.csv", "w", encoding="utf-8")
             for placa in placasActivas:
                 datos = self.vehiculosActuales[placa]
-                marca = str(datos[0])
-                color = str(datos[1])
-                tipo = str(datos[2])
-                espacio = str(datos[3])
-                horaIn = str(datos[4])
-                monto = str(datos[6])
+                marca = str(datos[0]); color = str(datos[1]); tipo = str(datos[2])
+                espacio = str(datos[3]); horaIn = str(datos[4]); monto = str(datos[6])
                 fila = placa + "," + marca + "," + color + "," + tipo + "," + espacio + "," + horaIn + "," + monto + "\n"
                 archivo.write(fila)
             archivo.close()
         except Exception as errorArchivo:
-            messagebox.showerror("No se pudo exportar el archivo CSV manual: " + str(errorArchivo))
+            messagebox.showerror("Error", "No se pudo exportar el archivo CSV manual: " + str(errorArchivo))
             return
         for placa in placasActivas:
             datosCarro = self.vehiculosActuales[placa]
+            tipoPagoCierre = "Efectivo (Cierre)"
             montoTotalCierre = montoTotalCierre + datosCarro[6]
+            totalesPorTipoPago[tipoPagoCierre] = totalesPorTipoPago.get(tipoPagoCierre, 0) + datosCarro[6]
+            listaRegistrosReporte.append((datosCarro[3], placa, datosCarro[4], datetime.now().strftime("%H:%M"), tipoPagoCierre, datosCarro[6]))
             try:
-                generarComprobantePago(placa, datosCarro, "Efectivo (Cierre)")
+                generarComprobantePago(placa, datosCarro, tipoPagoCierre)
                 self.vehiculosActuales.pop(placa)
             except Exception as e:
                 print("Error procesando factura en lote para " + str(placa) + ": " + str(e))
+        nombreReporte = generarReporteCierreDiario(listaRegistrosReporte, totalesPorTipoPago, montoTotalCierre)
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
         ventanaEstadisticas.destroy()
-        mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierre_diario.csv' generado con exito.\n" +"Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
+        mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierreDiario.csv' generado con exito.\n" + "Reporte oficial: " + nombreReporte + "\n" + "Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
         messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
 
     def eventoAcercaDe(self):
