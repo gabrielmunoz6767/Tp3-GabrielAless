@@ -112,7 +112,7 @@ def generarReporteCierreDiario(listaRegistros, totalesPorTipoPago, montoTotalDia
 
     pdf.set_text_color(0, 51, 102)
     pdf.set_font("Arial", style="B", size=18)
-    pdf.cell(0, 12, txt="REPORTE DE CIERRE DIARIO", ln=1, align="₡")
+    pdf.cell(0, 12, txt="REPORTE DE CIERRE DIARIO", ln=1, align="CRC")
 
     pdf.set_text_color(80, 80, 80)
     pdf.set_font("Arial", style="I", size=11)
@@ -125,26 +125,26 @@ def generarReporteCierreDiario(listaRegistros, totalesPorTipoPago, montoTotalDia
     pdf.set_fill_color(0, 51, 102)
     pdf.set_font("Arial", style="B", size=9)
     for i in range(len(encabezados)):
-        pdf.cell(anchos[i], 8, txt=encabezados[i], border=1, fill=True, align="₡")
+        pdf.cell(anchos[i], 8, txt=encabezados[i], border=1, fill=True, align="CRC")
     pdf.ln()
 
     pdf.set_text_color(0, 0, 0)
     pdf.set_font("Arial", size=9)
     for fila in listaRegistros:
         for i in range(len(fila)):
-            pdf.cell(anchos[i], 7, txt=str(fila[i]), border=1, align="₡")
+            pdf.cell(anchos[i], 7, txt=str(fila[i]), border=1, align="CRC")
         pdf.ln()
 
     pdf.ln(8)
     pdf.set_text_color(0, 102, 51)
     pdf.set_font("Arial", style="B", size=11)
     for tipoPago in totalesPorTipoPago:
-        pdf.cell(0, 7, txt="Total " + tipoPago + ": ₡" + str(totalesPorTipoPago[tipoPago]), ln=1)
+        pdf.cell(0, 7, txt="Total " + tipoPago + ": CRC" + str(totalesPorTipoPago[tipoPago]), ln=1)
 
     pdf.ln(4)
     pdf.set_text_color(153, 0, 0)
     pdf.set_font("Arial", style="B", size=14)
-    pdf.cell(0, 10, txt="TOTAL RECAUDADO DEL DIA: ₡" + str(montoTotalDia), ln=1)
+    pdf.cell(0, 10, txt="TOTAL RECAUDADO DEL DIA: CRC" + str(montoTotalDia), ln=1)
 
     pdf.output(nombreArchivo)
     return nombreArchivo

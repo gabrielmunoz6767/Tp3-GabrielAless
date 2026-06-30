@@ -31,7 +31,7 @@ class VentanaParqueo:
             "Configuracion Inicial", 
             "¿Cuantos parqueos tiene su estacionamiento?")
         if cantidadEspacios is None or cantidadEspacios <= 0:
-            cantidadEspacios = 75
+            cantidadEspacios = 75 # puesta por default en caso de que no se ponga nada jeje
             
         tieneElectricos = messagebox.askyesno(
             "Configuracion Electrica",
@@ -137,7 +137,7 @@ class VentanaParqueo:
         
         # Este evento se dispara cuando la cuadrícula interna cambia de tamaño (agrega botones)
         def ajustarRegionScroll(evento):
-            # Forzamos al Canvas a reconocer el área total exacta de los botones
+            # aca se fuerza al Canvas a reconocer el área total exacta de los botones
             canvasScroll.configure(scrollregion=canvasScroll.bbox("all"))
         frameCuadricula.bind("<Configure>", ajustarRegionScroll)
         
@@ -208,10 +208,12 @@ class VentanaParqueo:
                 canvasScroll.yview_scroll(1, "units")
             elif evento.num == 4 or evento.delta == 120:  # Hacia arriba
                 canvasScroll.yview_scroll(-1, "units")
-                
         self.ventana.bind_all("<MouseWheel>", scrollConMouse)
 
     def crearMenuBotones(self, contenedorPadre):
+        '''
+        funcionamiento: Basicamente aca se crean los botones de los lados, en donde estara pues la casetilla y los demas botones de configuracion, acerca de etc...
+        '''
         frameLateral = tk.Frame(contenedorPadre, bg="#f0f0f0")
         frameLateral.pack(side=tk.RIGHT, fill="y", padx=5)
         
@@ -303,8 +305,7 @@ class VentanaParqueo:
                     horaEntrada, 
                     horaSalida, 
                     montoCalculado, 
-                    "Efectivo"
-                ]
+                    "Efectivo"]
             guardarEnDisco(self.vehiculosActuales)
             self.actualizarMapa()
             
@@ -312,7 +313,7 @@ class VentanaParqueo:
             messagebox.showinfo("Carga Masiva", mensajeAlerta)
             
         except Exception as error:
-            messagebox.showerror("No se pudo formatear la información de la API.\nDetalle: " + str(error))
+            messagebox.showerror("No se pudo formatear la información de la API \nDetalle: " + str(error))
 
     def actualizarMapa(self):
         """
@@ -380,18 +381,18 @@ class VentanaParqueo:
             formFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
             formFrame.pack(padx=30, fill="x", pady=10)
             
-            tk.Label(formFrame, text=f"# Espacio: {codigoEspacio}", font=("Arial", 11, "bold"), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
-            tk.Label(formFrame, text=f"Placa: {placaEncontrada}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
-            tk.Label(formFrame, text=f"Marca: {vehiculoEncontrado[0]}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
-            tk.Label(formFrame, text=f"Color: {vehiculoEncontrado[1]}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
-            tk.Label(formFrame, text=f"Hora entrada: {vehiculoEncontrado[4]}", font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text="# Espacio: " + str(codigoEspacio), font=("Arial", 11, "bold"), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text="Placa: " + str(placaEncontrada), font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text="Marca: " + str(vehiculoEncontrado[0]), font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text="Color: " + str(vehiculoEncontrado[1]), font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
+            tk.Label(formFrame, text="Hora entrada: " + str(vehiculoEncontrado[4]), font=("Arial", 11), bg="#f8f9fa", anchor="w").pack(fill="x", pady=3)
             
             self.placaPorFacturar = placaEncontrada
             
             btnFrame = tk.Frame(self.ventanaEmergente, bg="#f8f9fa")
             btnFrame.pack(fill="x", padx=30, pady=(15, 20))
             
-            btnPagar = tk.Button(
+            botonPagar = tk.Button(
                 btnFrame, 
                 text="Pagar", 
                 bg="#28a745",  
@@ -399,7 +400,7 @@ class VentanaParqueo:
                 font=("Arial", 12, "bold"), 
                 relief=tk.FLAT,
                 command=self.solicitarMetodoPago)
-            btnPagar.pack(side=tk.LEFT, fill="both", expand=True, padx=(0, 5))
+            botonPagar.pack(side=tk.LEFT, fill="both", expand=True, padx=(0, 5))
             
             btnRegresar = tk.Button(
                 btnFrame,
@@ -424,7 +425,7 @@ class VentanaParqueo:
             marcasDisponiblesApi = ["Toyota", "Hyundai", "Nissan", "Honda", "Suzuki", "Ford", "BYD"]
             tk.Label(formFrame, text="Marca:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=1, column=0, sticky="w", pady=5)
             self.comboMarca = ttk.Combobox(formFrame, values=marcasDisponiblesApi, state="readonly", width=20, font=("Arial", 10))
-            self.comboMarca.set("Toyota")
+            self.comboMarca.set("Toyota") # pues por default se pondra toyota, al ser el primero dentro de la lista, ya el usuario podra seleccionar
             self.comboMarca.grid(row=1, column=1, pady=5)
             
             coloresPool = ["Gris", "Blanco", "Negro", "Rojo", "Azul", "Plata"]
@@ -433,7 +434,7 @@ class VentanaParqueo:
                     coloresPool.append(v[1])
             tk.Label(formFrame, text="Color:", bg="#f8f9fa", font=("Arial", 9, "bold")).grid(row=2, column=0, sticky="w", pady=5)
             self.comboColor = ttk.Combobox(formFrame, values=coloresPool, font=("Arial", 10), width=20, state="readonly")
-            self.comboColor.set("Gris")
+            self.comboColor.set("Gris") # mismo caso que el toyota, al ser el priemro en aparecer pues aparece por defautl
             self.comboColor.grid(row=2, column=1, pady=5)
             
             horaReloj = datetime.now().strftime("%H:%M")
@@ -449,7 +450,20 @@ class VentanaParqueo:
             tk.Button(btnFrame, text="Regresar", bg="#6c757d", fg="white", font=("Arial", 10), width=12, command=self.ventanaEmergente.destroy).pack(side=tk.LEFT, padx=10)
 
     def solicitarMetodoPago(self):
-        ventanaPadre = self.ventanaFactura if (self.ventanaFactura and self.ventanaFactura.winfo_exists()) else self.ventanaEmergente
+        """
+        Funcionalidad:
+        Crea una ventana emergente para que el usuario elija el método de pago
+        con el que desea cancelar el monto del parqueo.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
+        if self.ventanaFactura and self.ventanaFactura.winfo_exists():
+            ventanaPadre = self.ventanaFactura
+        else:
+            ventanaPadre = self.ventanaEmergente
+
         ventanaPago = tk.Toplevel(ventanaPadre)
         ventanaPago.title("Seleccionar Método de Pago")
         ventanaPago.geometry("300x180")
@@ -460,14 +474,42 @@ class VentanaParqueo:
         comboPago.set("Efectivo")
         comboPago.pack(pady=10)
         
-        def procesar():
-            metodo = comboPago.get()
-            self.ejecutarLiberacionYFactura(metodo)
-            ventanaPago.destroy()
-            
-        tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
+        tk.Button(
+            ventanaPago, 
+            text="Procesar Factura", 
+            bg="green", 
+            fg="white", 
+            command=lambda: self.procesarPago(comboPago, ventanaPago)).pack(pady=15)
+    
+    def procesarPago(self, comboPago, ventanaPago):
+        """
+        Funcionalidad:
+        Obtiene la opción seleccionada en el combobox, ejecuta la facturación
+        y destruye la ventana de selección de pago.
+        Entrada:
+        - comboPago (Combobox): Componente gráfico que contiene el método elegido.
+        - ventanaPago (Toplevel): Ventana de pago que se debe cerrar.
+        Salida:
+        - Ninguna
+        """
+        metodo = comboPago.get()
+        self.ejecutarLiberacionYFactura(metodo)
+        ventanaPago.destroy()
+        
+        
 
     def ejecutarLiberacionYFactura(self, metodoPago):
+        """
+        Funcionalidad:
+        Calcula el cobro final de un vehículo, registra su hora de salida,
+        remueve el automóvil de los registros activos guardando los cambios en 
+        disco, actualiza visualmente el mapa de estacionamiento, emite el 
+        comprobante de pago en formato PDF y cierra las ventanas emergentes abiertas.
+        Entrada:
+        - metodoPago (str): El método seleccionado por el usuario para cancelar el monto (Efectivo, SINPE o Tarjeta).
+        Salida:
+        - Ninguna
+        """
         datosCarro = self.vehiculosActuales[self.placaPorFacturar]
         datosCarro[6] = self.calcularMontoCobro(datosCarro)
         datosCarro[5] = datetime.now().strftime("%H:%M")
@@ -512,6 +554,7 @@ class VentanaParqueo:
             return 0
         horasCobrables = math.ceil(minutosTranscurridos / 60)
         return int(horasCobrables * self.montoPorHora)
+    
     def guardarManual(self):
         """
         Funcionalidad:
@@ -522,36 +565,59 @@ class VentanaParqueo:
         Salida:
         - Ninguna
         """
-        p = self.entradaPlaca.get().strip().upper()
-        m = self.comboMarca.get()
-        c = self.comboColor.get() 
-        horaIn = self.entradaHoraEntrada.get()
-        if not p or not c:
-            messagebox.showwarning("Atencion", "Por favor ingrese la placa y seleccione un color.")
+        placaIngresada = self.entradaPlaca.get().strip().upper()
+        marcaSeleccionada = self.comboMarca.get()
+        colorSeleccionado = self.comboColor.get() 
+        horaEntrada = self.entradaHoraEntrada.get()
+        if placaIngresada == "":
+            messagebox.showwarning("El campo de la placa no puede quedar vacío.")
             return
-        if p in self.vehiculosActuales:
+        if placaIngresada in self.vehiculosActuales:
+            espacioOcupado = str(self.vehiculosActuales[placaIngresada][3])
             messagebox.showwarning(
                 "Placa Duplicada",
-                "La placa " + p + " ya se encuentra activa en el espacio " + str(self.vehiculosActuales[p][3]) + ".\nNo puede ingresar el mismo vehiculo dos veces.")
+                "La placa " + placaIngresada + " ya está registrada en el espacio " + espacioOcupado + ".\nNo se puede ingresar el mismo auto dos veces.")
             return
         patronLetrasNum = r"^[A-Z]{3}-\d{3}$"
         patronSoloNum = r"^\d{1,8}$"
-        if not (re.match(patronLetrasNum, p) or re.match(patronSoloNum, p)):
-            mensajeErrorPlaca = ("Formato de placa invalido o contiene caracteres especiales.\n\n" + "Formatos permitidos:\n" + " Tres letras, guion y tres numeros (Ej: ABC-123)\n" + " Solo numeros de hasta 8 digitos (Ej: 582491)" )
-            messagebox.showwarning("Placa Incorrecta", mensajeErrorPlaca)
+        if not (re.match(patronLetrasNum, placaIngresada) or re.match(patronSoloNum, placaIngresada)):
+            mensajeErrorPlaca = ("El formato de la placa es incorrecto.\n\n" + 
+                                 "Formatos válidos:\n" + 
+                                 "- 3 letras, guion y 3 números (Ej: ABC-123)\n" + 
+                                 "- Solo números de máximo 8 dígitos (Ej: 582491)")
+            messagebox.showwarning("Placa Inválida", mensajeErrorPlaca)
             return
-        self.vehiculosActuales[p] = [m, c, "Manual", self.codigoEspacioActual, horaIn, "00:00", self.montoPorHora, "Pendiente"]
+        self.vehiculosActuales[placaIngresada] = [marcaSeleccionada, colorSeleccionado, "Manual", self.codigoEspacioActual, horaEntrada, "00:00", self.montoPorHora, "Pendiente"]
         try:
-            nombreVoucher = generarVoucherEntrada(p, m, c, self.tipoEspacioActualSeleccionado, self.codigoEspacioActual)
+            nombreVoucher = generarVoucherEntrada(
+                placaIngresada, 
+                marcaSeleccionada, 
+                colorSeleccionado, 
+                self.tipoEspacioActualSeleccionado, 
+                self.codigoEspacioActual)
             guardarEnDisco(self.vehiculosActuales)
             self.actualizarMapa()
-            mensajeExito = ("Vehiculo Estacionado!\n\n" + "El espacio " + self.codigoEspacioActual + " paso a color ROJO.\n" + "Se informa verbalmente que el costo es de C" + str(self.montoPorHora) + " por hora.\n\n" + "Voucher creado: " + nombreVoucher )
+            mensajeExito = ("Vehículo registrado\n\n" + 
+                            "El espacio " + self.codigoEspacioActual + " cambió a ROJO.\n" + 
+                            "Costo por hora: ₡" + str(self.montoPorHora) + ".\n\n" + 
+                            "Archivo generado: " + nombreVoucher)
             messagebox.showinfo("Espacio Reservado", mensajeExito)
             self.ventanaEmergente.destroy()
         except Exception as error:
-            messagebox.showerror("Error de Voucher", "No se pudo compilar el archivo del Voucher PDF.\nDetalle: " + str(error))
+            messagebox.showerror( "No se pudo crear el archivo PDF del Voucher.\nDetalle: " + str(error))
 
     def eventoFacturar(self):
+        """
+        Funcionalidad:
+        Muestra la interfaz gráfica para gestionar la salida de un automóvil. 
+        Verifica si existen vehículos en el estacionamiento, genera una ventana 
+        emergente con un menú desplegable ordenado alfabéticamente con las placas 
+        activas y habilita la opción de procesar el cobro.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         if not self.vehiculosActuales:
             messagebox.showinfo("Facturación", "No hay vehículos activos en el parqueo para facturar.")
             return
@@ -560,7 +626,7 @@ class VentanaParqueo:
         self.ventanaFactura.geometry("350x220")
         self.ventanaFactura.config(bg="#f0f0f0")
         
-        tk.Label(self.ventanaFactura, text="--- SALIDA DE VEHÍCULO ---", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=10)
+        tk.Label(self.ventanaFactura, text="SALIDA DE VEHÍCULO", font=("Arial", 11, "bold"), bg="#f0f0f0").pack(pady=10)
         tk.Label(self.ventanaFactura, text="Seleccione la Placa del vehículo:", bg="#f0f0f0").pack(anchor="w", padx=30)
         
         placasActivas = sorted(list(self.vehiculosActuales.keys()))
@@ -573,22 +639,29 @@ class VentanaParqueo:
         self.btnBuscar.pack(pady=15)
 
     def buscarYProcesar(self):
+        """
+        Funcionalidad:
+        Busca los datos de la placa seleccionada en el menú de facturación. Si el
+        vehículo está activo, solicita confirmación al usuario, oculta los componentes
+        de búsqueda de la ventana y despliega en pantalla el desglose del cobro.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         placaBuscar = self.entradaBusqueda.get()
         if not placaBuscar:
-            messagebox.showwarning("Atención", "Por favor, seleccione una placa de la lista.")
+            messagebox.showwarning("seleccione una placa de la lista.")
             return
-            
         if placaBuscar in self.vehiculosActuales:
             datosCarro = self.vehiculosActuales[placaBuscar]
             self.placaPorFacturar = placaBuscar
-            
             confirmar = messagebox.askyesno(
                 "Confirmar Selección", 
                 "¿Está seguro de que desea procesar la salida del vehículo con placa " + placaBuscar + "?")
             if not confirmar:
                 return 
-                
-            self.entradaBusqueda.pack_forget()
+            self.entradaBusqueda.pack_forget() # pack_forget() quita temporalmente el menú desplegable de la pantalla para limpiar la interfaz
             self.btnBuscar.pack_forget()
             
             tk.Label(self.ventanaFactura, text="Vehículo: " + str(datosCarro[0]) + " (" + str(datosCarro[1]) + ")", font=("Arial", 10), bg="#f0f0f0").pack(pady=2)
@@ -600,6 +673,16 @@ class VentanaParqueo:
             messagebox.showerror("Ha ocurrido un problema", "La placa seleccionada ya no se encuentra activa.")
 
     def confirmarSalida(self):
+        """
+        Funcionalidad:
+        Finaliza el proceso de salida removiendo el vehículo del diccionario activo,
+        actualiza la persistencia en el disco y refresca el mapa gráfico del parqueo.
+        Muestra una notificación indicando el espacio liberado y cierra la ventana de facturación.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         datosCarro = self.vehiculosActuales.pop(self.placaPorFacturar)
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
@@ -696,39 +779,43 @@ class VentanaParqueo:
             "Esto exportara el archivo CSV, el reporte PDF y vaciara el parqueo.")
         if not confirmar:
             return
-        placasActivas = list(self.vehiculosActuales.keys())
-        totalVehiculosFacturados = len(placasActivas)
-        montoTotalCierre = 0
-        listaRegistrosReporte = []
-        totalesPorTipoPago = {}
+        listaPlacas = list(self.vehiculosActuales.keys())
+        cantCarros = len(listaPlacas)
+        totalCierre = 0
+        datosReporte = []
+        pagosDicc = {}
         try:
             archivo = open("cierreDiario.csv", "w", encoding="utf-8")
-            for placa in placasActivas:
-                datos = self.vehiculosActuales[placa]
-                marca = str(datos[0]); color = str(datos[1]); tipo = str(datos[2])
-                espacio = str(datos[3]); horaIn = str(datos[4]); monto = str(datos[6])
-                fila = placa + "," + marca + "," + color + "," + tipo + "," + espacio + "," + horaIn + "," + monto + "\n"
+            for p in listaPlacas:
+                carro = self.vehiculosActuales[p]
+                marca = str(carro[0])
+                color = str(carro[1])
+                tipo = str(carro[2])
+                espacio = str(carro[3])
+                horaIn = str(carro[4])
+                monto = str(carro[6])
+                fila = p + "," + marca + "," + color + "," + tipo + "," + espacio + "," + horaIn + "," + monto + "\n"
                 archivo.write(fila)
             archivo.close()
         except Exception as errorArchivo:
             messagebox.showerror("Error", "No se pudo exportar el archivo CSV manual: " + str(errorArchivo))
             return
-        for placa in placasActivas:
-            datosCarro = self.vehiculosActuales[placa]
-            tipoPagoCierre = "Efectivo (Cierre)"
-            montoTotalCierre = montoTotalCierre + datosCarro[6]
-            totalesPorTipoPago[tipoPagoCierre] = totalesPorTipoPago.get(tipoPagoCierre, 0) + datosCarro[6]
-            listaRegistrosReporte.append((datosCarro[3], placa, datosCarro[4], datetime.now().strftime("%H:%M"), tipoPagoCierre, datosCarro[6]))
+        for p in listaPlacas:
+            carro = self.vehiculosActuales[p]
+            tipoPago = "Efectivo (Cierre)"
+            totalCierre = totalCierre + carro[6]
+            pagosDicc[tipoPago] = pagosDicc.get(tipoPago, 0) + carro[6]
+            datosReporte.append((carro[3], p, carro[4], datetime.now().strftime("%H:%M"), tipoPago, carro[6]))
             try:
-                generarComprobantePago(placa, datosCarro, tipoPagoCierre)
-                self.vehiculosActuales.pop(placa)
+                generarComprobantePago(p, carro, tipoPago)
+                self.vehiculosActuales.pop(p)
             except Exception as e:
-                print("Error procesando factura en lote para " + str(placa) + ": " + str(e))
-        nombreReporte = generarReporteCierreDiario(listaRegistrosReporte, totalesPorTipoPago, montoTotalCierre)
+                print("Error procesando factura en lote para " + str(p) + ": " + str(e))
+        nombreReporte = generarReporteCierreDiario(datosReporte, pagosDicc, totalCierre)
         guardarEnDisco(self.vehiculosActuales)
         self.actualizarMapa()
         ventanaEstadisticas.destroy()
-        mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierreDiario.csv' generado con exito.\n" + "Reporte oficial: " + nombreReporte + "\n" + "Total vehiculos facturados en masa: " + str(totalVehiculosFacturados) + "\n" + "Total recaudado en el cierre: C" + str(montoTotalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
+        mensajeExito = ("CIERRE DIARIO\n\n" + "Archivo 'cierreDiario.csv' generado con exito.\n" + "Reporte oficial: " + nombreReporte + "\n" + "Total vehiculos facturados en masa: " + str(cantCarros) + "\n" + "Total recaudado en el cierre: C" + str(totalCierre) + "\n\n" + "Todos los espacios pasaron a estar disponibles.")
         messagebox.showinfo("Cierre Diario Exitoso", mensajeExito)
 
     def eventoAcercaDe(self):
