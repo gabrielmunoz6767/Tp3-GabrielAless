@@ -1,7 +1,14 @@
 import json
 
 def guardarEnDisco(diccionarioDatos):
-    """Guarda el estado actual del parqueo en un archivo JSON local."""
+    """
+    Funcionalidad:
+    Guarda el estado actual del parqueo en un archivo JSON en disco.
+    Entrada:
+    - diccionarioDatos(dict): diccionario con la informacion de todos los vehiculos activos
+    Salida:
+    - resultado(bool): True si se guardo correctamente, False si ocurrio un error
+"""
     try:
         archivo = open("parqueo_datos.json", "w")
         json.dump(diccionarioDatos, archivo, indent=4)
@@ -11,7 +18,14 @@ def guardarEnDisco(diccionarioDatos):
         return False
 
 def cargarDesdeDisco():
-    """Recupera los datos del JSON local al iniciar el sistema."""
+    """
+    Funcionalidad:
+    Recupera el diccionario de vehiculos guardado en disco al iniciar el sistema.
+    Entrada:
+    - Ninguna
+    Salida:
+    - diccionarioDatos(dict): datos recuperados del archivo, o un diccionario vacio si no existe
+"""
     try:
         archivo = open("parqueo_datos.json", "r")
         diccionarioDatos = json.load(archivo)

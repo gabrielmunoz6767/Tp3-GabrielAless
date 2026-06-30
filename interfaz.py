@@ -12,6 +12,15 @@ from factura import generarComprobantePago, generarVoucherEntrada, generarReport
 import math
 class VentanaParqueo:
     def __init__(self):
+        """
+        Funcionalidad:
+        Construye la ventana principal del sistema, solicita la configuracion
+        inicial del parqueo y arma la estructura de espacios disponibles.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         self.ventana = tk.Tk()
         self.ventana.title("Parqueo \"LOS QUE TENEMOS BASTANTE AURILLA\"")
         self.ventana.geometry("950x550")
@@ -102,6 +111,15 @@ class VentanaParqueo:
         self.lblOcupados.pack(side=tk.LEFT, padx=40)
 
     def crearMapaParqueo(self, contenedorPadre):
+        """
+        Funcionalidad:
+        Dibuja la cuadricula visual de espacios de parqueo agrupados por tipo,
+        con scroll vertical y soporte de scroll con el mouse.
+        Entrada:
+        - contenedorPadre(Frame): contenedor de tkinter donde se dibuja el mapa
+        Salida:
+        - Ninguna
+        """
         frameMapaEstructura = tk.Frame(contenedorPadre, bg="#f0f0f0")
         frameMapaEstructura.pack(side=tk.LEFT, fill="both", expand=True, padx=5)
         
@@ -225,6 +243,15 @@ class VentanaParqueo:
         lblBano.pack(anchor="w", pady=2)
 
     def eventoCargarVehiculos(self):
+        """
+        Funcionalidad:
+        Consulta la API externa, asigna vehiculos a los espacios regulares
+        disponibles respetando el tope maximo masivo y actualiza el mapa.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         try:
             respuestaApi = obtenerVehiculosApi()
             if isinstance(respuestaApi, dict):
@@ -288,6 +315,15 @@ class VentanaParqueo:
             messagebox.showerror("No se pudo formatear la información de la API.\nDetalle: " + str(error))
 
     def actualizarMapa(self):
+        """
+        Funcionalidad:
+        Recorre todos los espacios del parqueo y actualiza el color de cada boton
+        segun si esta ocupado o libre, junto con los contadores superiores.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         contadorOcupados = 0
         for infoEspacio in self.estructuraEspacios:
             codigo, tipo, colorLibre = infoEspacio
@@ -309,6 +345,15 @@ class VentanaParqueo:
         self.lblOcupados.config(text="Ocupados: " + str(contadorOcupados))
 
     def eventoClickEspacio(self, codigoEspacio):
+        """
+        Funcionalidad:
+        Abre la ventana de "Observar espacio", mostrando los datos del vehiculo
+        si esta ocupado, o el formulario de ingreso si esta libre.
+        Entrada:
+        - codigoEspacio(str): codigo del espacio seleccionado
+        Salida:
+        - Ninguna
+        """
         self.codigoEspacioActual = codigoEspacio
         vehiculoEncontrado = None
         placaEncontrada = ""
@@ -424,43 +469,43 @@ class VentanaParqueo:
             
         tk.Button(ventanaPago, text="Procesar Factura", bg="green", fg="white", command=procesar).pack(pady=15)
 
-def ejecutarLiberacionYFactura(self, metodoPago):
-    datosCarro = self.vehiculosActuales[self.placaPorFacturar]
-    datosCarro[6] = self.calcularMontoCobro(datosCarro)
-    datosCarro[5] = datetime.now().strftime("%H:%M")
-    datosCarro[7] = metodoPago
-    self.vehiculosActuales.pop(self.placaPorFacturar)
-    guardarEnDisco(self.vehiculosActuales)
-    self.actualizarMapa()
-    try:
-        nombreFacturaEmitida = generarComprobantePago(self.placaPorFacturar, datosCarro, metodoPago)
-        messagebox.showinfo(
-            "Factura Generada",
-            "Cobro procesado por " + str(metodoPago) + " (C" + str(datosCarro[6]) + ").\nEspacio " + str(datosCarro[3]) + " pasó a luz VERDE.\n\nDocumento emitido: " + nombreFacturaEmitida)
-    except Exception as error:
-        messagebox.showerror(
-            "Error en Facturación",
-            "No se pudo compilar el archivo PDF con su respectivo código QR.\nDetalle: " + str(error))
-    if self.ventanaFactura and self.ventanaFactura.winfo_exists():
-        self.ventanaFactura.destroy()
-    if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
-        self.ventanaEmergente.destroy()
-        
+    def ejecutarLiberacionYFactura(self, metodoPago):
+        datosCarro = self.vehiculosActuales[self.placaPorFacturar]
+        datosCarro[6] = self.calcularMontoCobro(datosCarro)
+        datosCarro[5] = datetime.now().strftime("%H:%M")
+        datosCarro[7] = metodoPago
+        self.vehiculosActuales.pop(self.placaPorFacturar)
+        guardarEnDisco(self.vehiculosActuales)
+        self.actualizarMapa()
         try:
             nombreFacturaEmitida = generarComprobantePago(self.placaPorFacturar, datosCarro, metodoPago)
-            
             messagebox.showinfo(
-                "Factura Generada", 
-                "Cobro procesado por " + str(metodoPago) + ".\nEspacio " + str(datosCarro[3]) + " pasó a luz VERDE.\n\nDocumento emitido: " + nombreFacturaEmitida)
+                "Factura Generada",
+                "Cobro procesado por " + str(metodoPago) + " (C" + str(datosCarro[6]) + ").\nEspacio " + str(datosCarro[3]) + " pasó a luz VERDE.\n\nDocumento emitido: " + nombreFacturaEmitida)
         except Exception as error:
             messagebox.showerror(
-                "Error en Facturación", 
+                "Error en Facturación",
                 "No se pudo compilar el archivo PDF con su respectivo código QR.\nDetalle: " + str(error))
-        
-        if self.ventanaFactura and self.ventanaFactura.winfo_exists(): # winfo_exist lo que hace genuinamente es que retornara true si la ventana de factura existe
+        if self.ventanaFactura and self.ventanaFactura.winfo_exists():
             self.ventanaFactura.destroy()
         if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
             self.ventanaEmergente.destroy()
+            
+            try:
+                nombreFacturaEmitida = generarComprobantePago(self.placaPorFacturar, datosCarro, metodoPago)
+                
+                messagebox.showinfo(
+                    "Factura Generada", 
+                    "Cobro procesado por " + str(metodoPago) + ".\nEspacio " + str(datosCarro[3]) + " pasó a luz VERDE.\n\nDocumento emitido: " + nombreFacturaEmitida)
+            except Exception as error:
+                messagebox.showerror(
+                    "Error en Facturación", 
+                    "No se pudo compilar el archivo PDF con su respectivo código QR.\nDetalle: " + str(error))
+            
+            if self.ventanaFactura and self.ventanaFactura.winfo_exists(): # winfo_exist lo que hace genuinamente es que retornara true si la ventana de factura existe
+                self.ventanaFactura.destroy()
+            if self.ventanaEmergente and self.ventanaEmergente.winfo_exists():
+                self.ventanaEmergente.destroy()
     def calcularMontoCobro(self, datosCarro):
         """
         Funcionalidad:
@@ -485,6 +530,15 @@ def ejecutarLiberacionYFactura(self, metodoPago):
         horasCobrables = math.ceil(minutosTranscurridos / 60)
         return int(horasCobrables * self.montoPorHora)
     def guardarManual(self):
+        """
+        Funcionalidad:
+        Valida y registra el ingreso manual de un vehiculo en el espacio
+        seleccionado, generando su voucher de entrada en PDF.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         p = self.entradaPlaca.get().strip().upper()
         m = self.comboMarca.get()
         c = self.comboColor.get() 
@@ -565,6 +619,15 @@ def ejecutarLiberacionYFactura(self, metodoPago):
         self.ventanaFactura.destroy()
 
     def eventoReportes(self):
+        """
+        Funcionalidad:
+        Abre el panel de reportes con el resumen de ingresos actuales y los
+        accesos a cierre diario y cierre por tipo de pago.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         totalDineroCaja = 0
         conteoMasivo = 0
         conteoManual = 0
@@ -627,6 +690,15 @@ def ejecutarLiberacionYFactura(self, metodoPago):
         tk.Button(ventanaStats, text="Cerrar Panel", command=ventanaStats.destroy, width=12, font=("Arial", 9)).pack(pady=(15, 0))
 
     def ejecutarCierreDiarioYFacturacionEnMasa(self, ventanaEstadisticas):
+        """
+        Funcionalidad:
+        Factura automaticamente todos los vehiculos pendientes, genera el CSV
+        manual, el reporte oficial en PDF y libera todos los espacios del parqueo.
+        Entrada:
+        - ventanaEstadisticas(Toplevel): ventana de reportes que se cierra al finalizar
+        Salida:
+        - Ninguna
+        """
         if not self.vehiculosActuales:
             messagebox.showinfo("Cierre Diario", "No hay vehiculos activos en el parqueo para facturar.")
             return
@@ -802,6 +874,15 @@ def ejecutarLiberacionYFactura(self, metodoPago):
         messagebox.showinfo("Configuración", "El tamaño del parqueo se ha reconfigurado a " + str(nuevaCantidad) + " espacios exitosamente.")
 
     def generarXmlPorTipoPago(self):
+        """
+        Funcionalidad:
+        Genera un archivo XML con los vehiculos activos agrupados en 3 secciones
+        segun su tipo de pago: efectivo, sinpe y tarjeta.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
         efectivo = ""
         sinpe = ""
         tarjeta = ""

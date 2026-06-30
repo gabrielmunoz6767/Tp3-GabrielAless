@@ -1,8 +1,15 @@
 class Estacionamiento:
     def __init__(self, codigoEspacio, infoVehiculo, datosEstadia, registroPago):
         """
-        Estructura el objeto de un espacio de estacionamiento según 
-        los requerimientos de la especificación.
+        Funcionalidad:
+        Inicializa un objeto que representa un espacio de estacionamiento ocupado.
+        Entrada:
+        - codigoEspacio(str): identificador del espacio (ej. "R1")
+        - infoVehiculo(dict): datos del vehiculo (placa, marca, color, tipo)
+        - datosEstadia(dict): datos de la estadia (hora de entrada y salida)
+        - registroPago(dict): datos del pago (monto y estado)
+        Salida:
+        - Ninguna
         """
         self.codigoEspacio = codigoEspacio
         self.infoVehiculo = infoVehiculo       # Diccionario con placa, marca, color, tipo
@@ -10,7 +17,15 @@ class Estacionamiento:
         self.registroPago = registroPago       # Diccionario con monto y método de pago
 
     def mostrarDatos(self):
-        """Muestra de forma limpia la información del espacio en consola."""
+        """
+        Funcionalidad:
+        Imprime en consola el estado actual del espacio de estacionamiento.
+        Entrada:
+        - Ninguna
+        Salida:
+        - Ninguna
+        """
+
         print("Estado del Espacio: " + str(self.codigoEspacio))
         if self.infoVehiculo and "placa" in self.infoVehiculo:
             print("Vehículo: " + str(self.infoVehiculo["marca"]) + " | Placa: " + str(self.infoVehiculo["placa"]))

@@ -3,8 +3,13 @@ import urllib.request # importada para conseguir el url de la api
 
 def obtenerVehiculosApi():
     """
-    Se conecta directamente al link de la API en Mockaroo, descarga los 
-    datos en tiempo real y arma las listas de atributos requeridas.
+    Funcionalidad:
+    Consulta la API de Mockaroo y transforma la respuesta en un diccionario
+    con la informacion de vehiculos necesaria para el sistema.
+    Entrada:
+    - Ninguna
+    Salida:
+    - diccionarioResultado(dict): diccionario {placa: [marca, color, tipo, espacio, horaEntrada, horaSalida, monto, tipoPago]}, vacio si falla la conexion
     """
     urlApi = "https://my.api.mockaroo.com/vehiculos_api.json?key=82ae48d0"
     try:

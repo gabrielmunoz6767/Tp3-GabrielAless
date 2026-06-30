@@ -3,8 +3,15 @@ from fpdf import FPDF
 import qrcode
 def generarComprobantePago(placaVehiculo, datosCarro, metodoPago):
     """
-    Genera un archivo PDF legítimo con FPDF e inserta un QR dinámico real.
-    No utiliza importación OS ni f-strings. Todas las variables usan camelCase.
+    Funcionalidad:
+    Genera la factura en PDF de salida de un vehiculo, incluyendo un codigo QR
+    con la informacion del cobro realizado.
+    Entrada:
+    - placaVehiculo(str): placa del vehiculo facturado
+    - datosCarro(list): datos del vehiculo (marca, color, tipo, espacio, horaEntrada, horaSalida, monto, tipoPago)
+    - metodoPago(str): metodo de pago utilizado (Efectivo, SINPE o Tarjeta)
+    Salida:
+    - nombreFactura(str): nombre del archivo PDF generado
     """
     ahora = datetime.now()
     fechaStr = ahora.strftime("%d-%m-%Y")
@@ -36,9 +43,19 @@ def generarComprobantePago(placaVehiculo, datosCarro, metodoPago):
 
 def generarVoucherEntrada(placaVehiculo, marcaVehiculo, colorVehiculo, tipoEspacio, codigoEspacio):
     """
-    Genera un archivo PDF tipo Voucher al parquear un vehículo en un espacio verde.
-    Crea un código QR dinámico con el formato Placa-Marca-Tipo-FechaHoraEntrada.
+    Funcionalidad:
+    Genera el voucher en PDF de ingreso de un vehiculo al parqueo,
+    incluyendo un codigo QR con la informacion de entrada.
+    Entrada:
+    - placaVehiculo(str): placa del vehiculo
+    - marcaVehiculo(str): marca seleccionada
+    - colorVehiculo(str): color seleccionado
+    - tipoEspacio(str): tipo de espacio asignado (Regular, Especial, Electrico)
+    - codigoEspacio(str): codigo del espacio asignado
+    Salida:
+    - nombreVoucher(str): nombre del archivo PDF generado
     """
+
     ahora = datetime.now()
     fechaStr = ahora.strftime("%d-%m-%Y")
     horaEntradaStr = ahora.strftime("%H_%M")
