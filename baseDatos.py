@@ -1,35 +1,37 @@
 import json
 
-def guardarEnDisco(diccionarioDatos):
+def guardarEnDisco(listaDeListasVehicos):
     """
     Funcionalidad:
-    Guarda el estado actual del parqueo en un archivo JSON en disco.
+    Guarda la matriz de vehículos en un archivo JSON en disco utilizando únicamente listas.
     Entrada:
-    - diccionarioDatos(dict): diccionario con la informacion de todos los vehiculos activos
+    - listaDeListasVehicos (list): Matriz donde cada elemento es una lista con los datos de un vehículo.
     Salida:
-    - resultado(bool): True si se guardo correctamente, False si ocurrio un error
-"""
+    - resultado (bool): True si se guardó correctamente, False si ocurrió un error.
+    """
     try:
-        archivo = open("parqueo_datos.json", "w")
-        json.dump(diccionarioDatos, archivo, indent=4)
+        archivo = open("parqueo_datos.json", "w", encoding="utf-8")
+        json.dump(listaDeListasVehicos, archivo, indent=4) 
         archivo.close()
         return True
     except:
         return False
 
-def cargarDesdeDisco():
+def cargarMemoria():
     """
     Funcionalidad:
-    Recupera el diccionario de vehiculos guardado en disco al iniciar el sistema.
+    Recupera la matriz de vehículos guardada en disco al iniciar el sistema.
     Entrada:
     - Ninguna
     Salida:
-    - diccionarioDatos(dict): datos recuperados del archivo, o un diccionario vacio si no existe
-"""
+    - listaDatos (list): Matriz con los datos recuperados, o una lista vacía si no existe.
+    """
     try:
-        archivo = open("parqueo_datos.json", "r")
-        diccionarioDatos = json.load(archivo)
+        archivo = open("parqueo_datos.json", "r", encoding="utf-8")
+        listaDatos = json.load(archivo) 
         archivo.close()
-        return diccionarioDatos
+        if isinstance(listaDatos, list):
+            return listaDatos
+        return []
     except:
-        return {}
+        return []
