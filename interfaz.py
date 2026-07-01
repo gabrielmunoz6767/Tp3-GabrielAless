@@ -965,7 +965,7 @@ class VentanaParqueo:
         archivo = open("cierrePorTipoPago.xml", "w", encoding="utf-8")
         archivo.write(contenidoXml)
         archivo.close()
-        messagebox.showinfo("XML Generated", "Archivo 'cierrePorTipoPago.xml' guardado correctamente.")
+        messagebox.showinfo("XML generado", "Archivo 'cierrePorTipoPago.xml' guardado correctamente.")
         
     def mostrarWindow(self):
         self.ventana.mainloop()
